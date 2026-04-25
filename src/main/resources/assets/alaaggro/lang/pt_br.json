@@ -1,0 +1,21 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: configuração recarregada, %s mobs aplicados.",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | ativo: %s | reativo: %s",
+  "commands.alaaggro.status.numbers": "Dano: x%s | Velocidade: x%s | Limite de velocidade: %s",
+  "commands.alaaggro.status.helpmem": "Pedido de ajuda: %s (raio %s) | Memória de longo prazo: %s",
+  "commands.alaaggro.status.villagepanic": "Aldeões hostis: %s | PanicGoal removido: %s",
+  "commands.alaaggro.status.lists": "Dimensões na lista negra: %s | Jogadores isentos: %s",
+  "commands.alaaggro.status.divider": "--- Mobs agressivos ativos (chunks carregados) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — ativo: %s, reativo: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro ativo = %s",
+  "commands.alaaggro.set.ok": "%s definido como %s",
+
+  "commands.alaaggro.exempt.added": "%s agora está isento da agressão.",
+  "commands.alaaggro.exempt.removed": "%s não está mais isento da agressão.",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "Configurações de servidor do AlaAggro"
+}

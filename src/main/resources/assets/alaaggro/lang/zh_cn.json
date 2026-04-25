@@ -1,0 +1,21 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro：配置已重新加载，已应用 %s 个生物。",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | 启用：%s | 反应模式：%s",
+  "commands.alaaggro.status.numbers": "伤害：x%s | 速度：x%s | 速度上限：%s",
+  "commands.alaaggro.status.helpmem": "求救：%s（半径 %s）| 长期记忆：%s",
+  "commands.alaaggro.status.villagepanic": "村民敌对：%s | 已移除恐慌目标：%s",
+  "commands.alaaggro.status.lists": "维度黑名单：%s | 豁免玩家：%s",
+  "commands.alaaggro.status.divider": "--- 活跃的敌对生物（已加载区块）---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — 启用：%s，反应模式：%s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro 启用 = %s",
+  "commands.alaaggro.set.ok": "%s 已设置为 %s",
+
+  "commands.alaaggro.exempt.added": "%s 现已豁免敌对生物。",
+  "commands.alaaggro.exempt.removed": "%s 不再豁免敌对生物。",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro 服务器设置"
+}

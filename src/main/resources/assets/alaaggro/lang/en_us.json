@@ -1,0 +1,21 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: config reloaded, %s mobs reapplied.",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | enabled: %s | reactive: %s",
+  "commands.alaaggro.status.numbers": "Damage: x%s | Speed: x%s | SpeedCap: %s",
+  "commands.alaaggro.status.helpmem": "CallForHelp: %s (radius %s) | LongTermMemory: %s",
+  "commands.alaaggro.status.villagepanic": "Hostile villagers: %s | PanicGoal removed: %s",
+  "commands.alaaggro.status.lists": "Dimension blacklist: %s | Exempt players: %s",
+  "commands.alaaggro.status.divider": "--- Active aggro mobs (loaded chunks) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — enabled: %s, reactive: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro enabled = %s",
+  "commands.alaaggro.set.ok": "%s set to %s",
+
+  "commands.alaaggro.exempt.added": "%s is now exempt from aggro.",
+  "commands.alaaggro.exempt.removed": "%s is no longer exempt from aggro.",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro Server Settings"
+}

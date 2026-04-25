@@ -1,0 +1,21 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: 設定を再読み込みしました。%s 体のモブに適用しました。",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | 有効: %s | リアクティブ: %s",
+  "commands.alaaggro.status.numbers": "ダメージ: x%s | 速度: x%s | 速度上限: %s",
+  "commands.alaaggro.status.helpmem": "援軍要請: %s (半径 %s) | 長期記憶: %s",
+  "commands.alaaggro.status.villagepanic": "敵対的な村人: %s | PanicGoal 除去: %s",
+  "commands.alaaggro.status.lists": "ブラックリストのディメンション: %s | 免除プレイヤー: %s",
+  "commands.alaaggro.status.divider": "--- アクティブな敵対モブ (読み込み済みチャンク) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — 有効: %s, リアクティブ: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro 有効 = %s",
+  "commands.alaaggro.set.ok": "%s を %s に設定しました",
+
+  "commands.alaaggro.exempt.added": "%s は敵対モブから免除されました。",
+  "commands.alaaggro.exempt.removed": "%s の免除を解除しました。",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro サーバー設定"
+}

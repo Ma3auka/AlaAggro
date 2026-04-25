@@ -1,0 +1,21 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: Konfiguration neu geladen, %s Mobs aktualisiert.",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | aktiv: %s | reaktiv: %s",
+  "commands.alaaggro.status.numbers": "Schaden: x%s | Geschwindigkeit: x%s | Geschwindigkeitsgrenze: %s",
+  "commands.alaaggro.status.helpmem": "Hilferuf: %s (Radius %s) | Langzeitgedächtnis: %s",
+  "commands.alaaggro.status.villagepanic": "Feindliche Dorfbewohner: %s | PanicGoal entfernt: %s",
+  "commands.alaaggro.status.lists": "Dimensionen-Sperrliste: %s | Befreite Spieler: %s",
+  "commands.alaaggro.status.divider": "--- Aktive aggressive Mobs (geladene Chunks) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — aktiv: %s, reaktiv: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro aktiv = %s",
+  "commands.alaaggro.set.ok": "%s gesetzt auf %s",
+
+  "commands.alaaggro.exempt.added": "%s ist nun von der Aggression befreit.",
+  "commands.alaaggro.exempt.removed": "%s ist nicht mehr von der Aggression befreit.",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro Servereinstellungen"
+}

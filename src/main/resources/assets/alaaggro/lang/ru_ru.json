@@ -1,0 +1,21 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: конфиг перечитан, обновлено мобов: %s.",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | включён: %s | реактивный режим: %s",
+  "commands.alaaggro.status.numbers": "Урон: x%s | Скорость: x%s | Потолок скорости: %s",
+  "commands.alaaggro.status.helpmem": "Зов подмоги: %s (радиус %s) | Долгая память: %s",
+  "commands.alaaggro.status.villagepanic": "Жители враждебны: %s | PanicGoal снят: %s",
+  "commands.alaaggro.status.lists": "Запрещённых измерений: %s | Освобождённых игроков: %s",
+  "commands.alaaggro.status.divider": "--- Активные агро-мобы (загруженные чанки) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — включён: %s, реактивный: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro включён = %s",
+  "commands.alaaggro.set.ok": "%s установлено в %s",
+
+  "commands.alaaggro.exempt.added": "%s освобождён от агрессии мобов.",
+  "commands.alaaggro.exempt.removed": "%s больше не освобождён от агрессии мобов.",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "Серверные настройки AlaAggro"
+}
