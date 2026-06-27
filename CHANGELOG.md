@@ -5,6 +5,13 @@ All notable changes to AlaAggro will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] — 2026-06-27
+
+### Fixed
+- Mobs no longer jitter or bounce on the surface of water and lava. Land mobs (cows, sheep, zombies …) are kept afloat but no longer try to path across the water toward the player, and their chase navigation is paused while they float, so they settle at the surface instead of fighting the buoyancy.
+- Water creatures (fish, axolotls, squid, dolphins …) no longer leap out of the water — they keep their native swimming and now pursue the player through the water instead of trying to surface.
+- The fix is universal — it applies to modded mobs too, not just vanilla ones, since the buoyancy handling now keys off how each mob actually moves rather than a hardcoded list.
+
 ## [1.0.4] — 2026-06-27
 
 ### Fixed

@@ -3,8 +3,10 @@ package com.ma3auka.alaaggro.event;
 import com.ma3auka.alaaggro.AlaAggro;
 import com.ma3auka.alaaggro.ai.AggroAttackGoal;
 import com.ma3auka.alaaggro.util.AggroConfigCache;
+import com.ma3auka.alaaggro.util.AquaticMobs;
 import com.ma3auka.alaaggro.util.BossGuard;
 import com.ma3auka.alaaggro.util.ExemptRegistry;
+import com.ma3auka.alaaggro.util.FluidAggro;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -78,7 +80,12 @@ public final class TickAggroHandler {
                 mob.setTarget(player);
 
                 // Force-start pathing in case MeleeAttackGoal hasn't ticked yet this second.
-                if (mob instanceof PathfinderMob pf) {
+                // Skip it while a land mob is buoyant in a fluid — forcing a fresh path there is
+                // exactly what fights FloatGoal and makes the mob jitter (TASK-002/003). The target
+                // stays set, so the chase resumes the instant the mob regains footing.
+                if (mob instanceof PathfinderMob pf
+                        && !FluidAggro.shouldSuspendChase(mob.isInWater(), mob.isInLava(),
+                                mob.onGround(), AquaticMobs.isAquatic(mob))) {
                     pf.getNavigation().moveTo(player, 1.0D);
                 }
             }

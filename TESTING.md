@@ -18,8 +18,8 @@ For studio-level testing strategy and rationale, see `_docs/14_TESTING_STRATEGY.
 ## Tier 1 — Unit tests
 
 **Location:** `src/test/java/com/ma3auka/alaaggro/unit/`
-**Status:** ✅ Phase 1 implemented — all 10 cases passing (`./gradlew test`)
-**Cases:** 10 (`ExemptRegistryTest` × 7, `AggroSnapshotDefaultsTest` × 3)
+**Status:** ✅ Phase 1 implemented — all 21 cases passing (`./gradlew test`)
+**Cases:** 21 (`ExemptRegistryTest` × 7, `AggroSnapshotDefaultsTest` × 3, `FluidAggroTest` × 11)
 
 ### `ExemptRegistryTest` — global exempt-player set
 
@@ -49,6 +49,29 @@ For studio-level testing strategy and rationale, see `_docs/14_TESTING_STRATEGY.
 
 **Real bug this catches:** developer adds new config field `enableScreaming`, wires it into `AggroConfigCache.rebuild()`, but forgets to add it to `Snapshot.defaults()`. Compiles fine. Server starts → handlers see snapshot from before reload, screaming is "false" instead of intended "true" for first 1-2 seconds. Test #8 fails on the missing record component or wrong value.
 
+### `FluidAggroTest` — water/lava jitter suspend rule
+
+`FluidAggro.shouldSuspendChase(inWater, inLava, onGround, aquatic)` is the gate that fixes the
+"mobs bounce all over on water and lava surfaces" bug (TASK-002 / TASK-003). The fix is a tiny
+boolean rule, but it is exactly the kind of logic that breaks silently in both directions, so it
+is the one piece extracted into a pure (MC-free) helper and pinned by a truth table.
+
+| # | Test | Bug class caught |
+|---|---|---|
+| 11–19 | `shouldSuspendChase_truthTable` (9 rows) | Full truth table over the four inputs. |
+| 20 | `aquatic_isNeverSuspended` | Aquatic short-circuit — a submerged fish must keep chasing, never freeze. |
+| 21 | `dryLandMob_chases` | A mob on dry ground is never suspended (no false positive that would kill aggro). |
+
+**Real bug this catches:** if the rule regresses to "suspend whenever `inWater || inLava`" (dropping
+the `onGround` term), mobs wading through 1-deep water with their feet on the ground would freeze and
+stop attacking — silently breaking the mod's whole point. If it regresses the other way (dropping the
+fluid check), the original surface jitter returns. Row #6/#7 and the aquatic rows lock both directions.
+
+**Why this is a pure helper:** the four inputs are read off the live entity in
+`AggroAttackGoal.tick()` and `TickAggroHandler`, but the verdict itself has no Minecraft types, so it
+runs on a bare JVM. The `aquatic` flag is computed by `AquaticMobs.isAquatic(Mob)` (MC `instanceof` +
+`canBreatheUnderwater()`), which is GameTest-only (Tier 2).
+
 ---
 
 ## Tier 2 — NeoForge GameTests
@@ -64,6 +87,8 @@ For studio-level testing strategy and rationale, see `_docs/14_TESTING_STRATEGY.
 4. **`disabledModSkipsInjection`** — set `enabled=false`, spawn cow, no goal injection.
 5. **`blacklistedEntitySkipped`** — entity in `ENTITY_BLACKLIST`, no injection.
 6. **`whitelistOnlyAllowedInjected`** — non-empty whitelist excluding cow → cow not injected; including cow → cow injected.
+7. **`landMobNoJitterInWater`** — spawn a Cow over deep water, after 60 ticks its vertical velocity stays near zero (no FloatGoal-vs-navigation bounce). Verifies the TASK-002/003 fix end-to-end.
+8. **`waterMobHasNoFloatGoal`** — spawn a Cod, its `goalSelector` contains no `FloatGoal` (so it can't leap out of water) but does contain `AggroAttackGoal`.
 
 ### Test isolation requirements
 
@@ -81,11 +106,14 @@ All AlaAggro GameTests **must** use:
 | Production class / method | Tier 1 | Tier 2 | Why not / Notes |
 |---|---|---|---|
 | `ExemptRegistry` (full API) | ✅ 100% | — | Pure Java + ConcurrentHashMap, fully covered. |
+| `FluidAggro.shouldSuspendChase` | ✅ 100% | — | Pure boolean rule, full truth table pinned. |
+| `AquaticMobs.isAquatic(Mob)` | ❌ | 🟡 planned | `instanceof` + `canBreatheUnderwater()` on MC entities — GameTest only. |
 | `AggroConfigCache.Snapshot.defaults()` | ✅ | — | All fields pinned. |
 | `AggroConfigCache.get()` | ✅ partial | — | Null-safety only; full state is integration. |
 | `AggroConfigCache.rebuild()` | ❌ | 🟡 planned | Reads `ModConfigSpec` — needs MC bootstrap. |
 | `BossGuard.isBoss(Entity)` | ❌ | 🟡 planned | `instanceof` on MC entity classes — GameTest only. |
-| `MobAggroEventHandler.injectAggro` | ❌ | 🟡 planned | High priority for Tier 2 — load-bearing AI logic. |
+| `MobAggroEventHandler.injectAggro` | ❌ | 🟡 planned | High priority for Tier 2 — load-bearing AI logic; now branches land vs aquatic brain + `setCanFloat(false)`. |
+| `AggroAttackGoal.tick` (fluid suspend) | ⚠️ partial | 🟡 planned | Decision covered via `FluidAggro`; the `navigation.stop()` side-effect is Tier 2. |
 | `MobAggroEventHandler.onEntityJoin` | ❌ | 🟡 planned | Event handler — GameTest only. |
 | `TickAggroHandler.onServerTick` | ❌ | 🟡 planned | Defensive layer — Tier 2 must verify. |
 | `AggroAttackGoal` | ❌ | 🟡 planned | Goal AI — GameTest only. |
@@ -109,4 +137,4 @@ If the bug class can only be expressed as in-game behaviour, defer to Tier 2 (Ph
 
 ---
 
-*Last updated: 2026-04-26 — Phase 1 (JUnit) complete, Phase 2 (GameTest) deferred.*
+*Last updated: 2026-06-27 — added `FluidAggroTest` (water/lava jitter fix, TASK-002/003); 21 unit cases. Phase 2 (GameTest) still deferred.*

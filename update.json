@@ -1,10 +1,11 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/alaaggro",
   "promos": {
-    "26.1-recommended": "1.0.4",
-    "26.1-latest": "1.0.4"
+    "26.1-recommended": "1.0.5",
+    "26.1-latest": "1.0.5"
   },
   "26.1": {
+    "1.0.5": "Fix mobs jittering on water and lava surfaces; water creatures no longer leap out and now chase through water.",
     "1.0.4": "Stop console spam — per-mob aggro injection now logs at DEBUG instead of INFO.",
     "1.0.3": "Add config-screen translations (en_us + ru_ru).",
     "1.0.2": "Enable in-game Settings button via IConfigScreenFactory.",
