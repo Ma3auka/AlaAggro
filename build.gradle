@@ -110,6 +110,14 @@ configurations {
 }
 
 dependencies {
+    // ── Testing ──────────────────────────────────────────────────────────
+    // Tier 1: JUnit 5 for pure-Java unit tests (math, registries, snapshots).
+    // Runs as part of `./gradlew build` via the standard `test` task.
+    // Tier 2 (NeoForge GameTests) lives in src/main/java/.../gametest/ and
+    // runs via `./gradlew runGameTestServer` — no extra deps needed.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
@@ -177,6 +185,15 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// JUnit 5 platform for unit tests in src/test/java
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+    }
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.

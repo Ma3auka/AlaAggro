@@ -17,5 +17,29 @@
   "commands.alaaggro.exempt.removed": "%s больше не освобождён от агрессии мобов.",
 
   "alaaggro.configuration.title": "AlaAggro",
-  "alaaggro.configuration.section.alaaggro.server.toml": "Серверные настройки AlaAggro"
+  "alaaggro.configuration.section.alaaggro.server.toml": "Серверные настройки AlaAggro",
+
+  "alaaggro.configuration.general": "Основные",
+  "alaaggro.configuration.aggression": "Агрессия",
+  "alaaggro.configuration.callForHelp": "Зов на помощь",
+  "alaaggro.configuration.memory": "Память",
+  "alaaggro.configuration.lists": "Списки мобов",
+
+  "alaaggro.configuration.enabled": "Включить AlaAggro",
+  "alaaggro.configuration.hostileVillagers": "Враждебные жители",
+  "alaaggro.configuration.reactiveOnly": "Только реактивная агрессия",
+  "alaaggro.configuration.dimensionBlacklist": "Чёрный список измерений",
+
+  "alaaggro.configuration.damageMultiplier": "Множитель урона",
+  "alaaggro.configuration.speedMultiplier": "Множитель скорости",
+  "alaaggro.configuration.perCategorySpeedCap": "Потолок скорости (на категорию)",
+  "alaaggro.configuration.defaultAttackDamage": "Базовый урон",
+  "alaaggro.configuration.addMeleeGoalToPassive": "Атаки от пассивных мобов",
+  "alaaggro.configuration.removePanicGoal": "Убрать панику",
+
+  "alaaggro.configuration.radius": "Радиус оповещения (блоки)",
+  "alaaggro.configuration.longTermMemory": "Долговременная память",
+
+  "alaaggro.configuration.entityBlacklist": "Чёрный список существ",
+  "alaaggro.configuration.entityWhitelist": "Белый список существ"
 }

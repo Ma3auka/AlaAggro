@@ -65,9 +65,11 @@ public final class MobAggroEventHandler {
     public static void injectAggro(Mob mob, AggroConfigCache.Snapshot s) {
         try {
             AttributeInstance atk = mob.getAttribute(Attributes.ATTACK_DAMAGE);
-            AlaAggro.LOGGER.info("AlaAggro: inject {} (hasATTACK_DAMAGE={}, isPathfinder={})",
-                    BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()),
-                    atk != null, mob instanceof PathfinderMob);
+            if (AlaAggro.LOGGER.isDebugEnabled()) {
+                AlaAggro.LOGGER.debug("AlaAggro: inject {} (hasATTACK_DAMAGE={}, isPathfinder={})",
+                        BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()),
+                        atk != null, mob instanceof PathfinderMob);
+            }
 
             // 1. Attack damage (per instance, only if the attribute exists). For mobs without
             //    it (chicken, sheep, cow, pig) AggroAttackGoal falls back to defaultAttackDamage

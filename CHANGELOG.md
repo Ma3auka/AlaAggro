@@ -5,6 +5,26 @@ All notable changes to AlaAggro will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] — 2026-06-27
+
+### Fixed
+- Stop the constant console spam. The diagnostic line that printed for every mob spawn (and for every loaded mob on `/alaaggro reload`) now logs at DEBUG instead of INFO, so a normal server no longer shows an endless stream of `AlaAggro: inject …` messages. Enable DEBUG logging if you need it for troubleshooting.
+
+## [1.0.3] — 2026-04-26
+
+### Added
+- Config screen translations (en_us + ru_ru) — section names and entry labels now render as readable text instead of raw `alaaggro.configuration.*` keys.
+
+## [1.0.2] — 2026-04-26
+
+### Fixed
+- Fix the in-game Mods → AlaAggro → Settings button being greyed-out — register `IConfigScreenFactory` via a new client-only `AlaAggroClient` so NeoForge's built-in `ConfigurationScreen` opens for the SERVER spec. Lets users toggle the master `enabled` flag from the UI instead of editing TOML by hand.
+
+## [1.0.1] — 2026-04-26
+
+### Changed
+- Local rebuild — confirms the existing master `enabled` toggle (server config, `[general].enabled`) covers all runtime handlers (MobAggro, TickAggro, CallForHelp, Memory). No source changes.
+
 ## [1.0.0] — 2026-04-25
 
 ### Added

@@ -1,10 +1,14 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/alaaggro",
   "promos": {
-    "26.1-recommended": "1.0.0",
-    "26.1-latest": "1.0.0"
+    "26.1-recommended": "1.0.4",
+    "26.1-latest": "1.0.4"
   },
   "26.1": {
+    "1.0.4": "Stop console spam — per-mob aggro injection now logs at DEBUG instead of INFO.",
+    "1.0.3": "Add config-screen translations (en_us + ru_ru).",
+    "1.0.2": "Enable in-game Settings button via IConfigScreenFactory.",
+    "1.0.1": "Local rebuild; verify master enabled toggle coverage.",
     "1.0.0": "Initial public release. Every mob attacks the player on sight."
   }
 }
