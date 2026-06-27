@@ -107,9 +107,12 @@ public final class MobAggroEventHandler {
             //    and the random-stroll/look goals. ATTACK_DAMAGE attribute is NOT required —
             //    AggroAttackGoal falls back to config defaultAttackDamage if it's missing.
             //    Land and water mobs get different brains:
-            //      - Land mobs keep FloatGoal (so they don't drown) but their navigator is told
-            //        NOT to route over water (setCanFloat(false)); pathing into water toward the
-            //        player is the root of the surface jitter (TASK-002/003).
+            //      - Land mobs keep FloatGoal (so they don't drown). FloatGoal's constructor sets
+            //        the navigator to canFloat(true), and we leave it that way on purpose: the chase
+            //        path is then allowed to route ACROSS water, so the mob swims along the surface
+            //        toward the player instead of bouncing in place in deep water (TASK-006). Letting
+            //        the path go through the water — rather than fighting it at the edge — is also
+            //        what keeps the surface jitter from coming back (TASK-002/003).
             //      - Water mobs (fish, axolotl, squid, dolphin…) get NO FloatGoal — otherwise they
             //        surface and leap out of the water — and chase the player through their native
             //        water navigation instead of avoiding it.
@@ -117,9 +120,6 @@ public final class MobAggroEventHandler {
                 boolean aquatic = AquaticMobs.isAquatic(pf);
                 if (!aquatic) {
                     pf.goalSelector.addGoal(1, new FloatGoal(pf));
-                    // FloatGoal's constructor flips the navigator to canFloat(true); undo it so the
-                    // mob walks up to the water's edge to attack instead of bobbing across the surface.
-                    pf.getNavigation().setCanFloat(false);
                 }
                 pf.goalSelector.addGoal(2, new AggroAttackGoal(pf));
                 pf.goalSelector.addGoal(7, aquatic
@@ -140,6 +140,24 @@ public final class MobAggroEventHandler {
         } catch (Throwable t) {
             AlaAggro.LOGGER.warn("AlaAggro: failed to inject aggro into {}: {}",
                     mob.getType(), t.toString());
+        }
+    }
+
+    /**
+     * Soft-disable an already-aggressive mob at runtime, without waiting for a world reload.
+     * Clears its player target and strips the goals we injected (attack + targeting) so it stops
+     * chasing immediately. The leftover idle goals (float, stroll, look) are harmless; a full
+     * vanilla brain is restored on the next entity reload. Used when the mod is toggled off, so
+     * the change is visible right away instead of mobs finishing their current chase.
+     */
+    public static void pacify(Mob mob) {
+        try {
+            mob.goalSelector.removeAllGoals(g -> g instanceof AggroAttackGoal);
+            mob.targetSelector.removeAllGoals(
+                    g -> g instanceof NearestAttackableTargetGoal || g instanceof HurtByTargetGoal);
+            mob.setTarget(null); // safe to clear: MemoryHandler only blocks this while the mod is enabled
+        } catch (Throwable t) {
+            AlaAggro.LOGGER.warn("AlaAggro: failed to pacify {}: {}", mob.getType(), t.toString());
         }
     }
 

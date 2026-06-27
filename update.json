@@ -1,10 +1,16 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/alaaggro",
   "promos": {
-    "26.1-recommended": "1.0.5",
-    "26.1-latest": "1.0.5"
+    "26.1-recommended": "1.0.6",
+    "26.1-latest": "1.0.6",
+    "26.2-recommended": "1.0.6",
+    "26.2-latest": "1.0.6"
+  },
+  "26.2": {
+    "1.0.6": "Port to Minecraft 26.2 (Chaos Cubed). The new Sulfur Cube keeps its vanilla behaviour by default, like slimes and magma cubes. Land mobs swim across water toward you; config commands now persist to disk."
   },
   "26.1": {
+    "1.0.6": "Land mobs now swim across water toward you instead of bouncing in deep water. Config commands (/alaaggro toggle, set) now persist to disk instead of resetting on world reload.",
     "1.0.5": "Fix mobs jittering on water and lava surfaces; water creatures no longer leap out and now chase through water.",
     "1.0.4": "Stop console spam — per-mob aggro injection now logs at DEBUG instead of INFO.",
     "1.0.3": "Add config-screen translations (en_us + ru_ru).",

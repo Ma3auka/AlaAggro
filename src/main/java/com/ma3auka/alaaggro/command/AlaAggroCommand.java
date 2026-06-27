@@ -87,7 +87,9 @@ public final class AlaAggroCommand {
     private static int cmdReload(CommandContext<CommandSourceStack> ctx) {
         AggroConfigCache.rebuild();
         AggroConfigCache.Snapshot s = AggroConfigCache.get();
-        int affected = applyToLoadedMobs(ctx.getSource().getServer(), s);
+        MinecraftServer server = ctx.getSource().getServer();
+        // Honour the enabled flag: when the mod is off, reload must calm loaded mobs, not re-aggro them.
+        int affected = s.enabled() ? applyToLoadedMobs(server, s) : pacifyLoadedMobs(server);
         ctx.getSource().sendSuccess(() -> tr("commands.alaaggro.reload.success", affected), true);
         return 1;
     }
@@ -125,7 +127,16 @@ public final class AlaAggroCommand {
     private static int cmdToggle(CommandContext<CommandSourceStack> ctx) {
         boolean newVal = !AlaAggroConfig.ENABLED.get();
         AlaAggroConfig.ENABLED.set(newVal);
+        persistConfig();
         AggroConfigCache.rebuild();
+        // Apply the change to already-loaded mobs immediately, so toggling is visible at once:
+        // ON aggros nearby mobs, OFF calms the ones already chasing instead of waiting for a reload.
+        MinecraftServer server = ctx.getSource().getServer();
+        if (newVal) {
+            applyToLoadedMobs(server, AggroConfigCache.get());
+        } else {
+            pacifyLoadedMobs(server);
+        }
         ctx.getSource().sendSuccess(() -> tr("commands.alaaggro.toggle.set", bool(newVal)), true);
         return 1;
     }
@@ -133,6 +144,7 @@ public final class AlaAggroCommand {
     private static int setDouble(CommandContext<CommandSourceStack> ctx,
                                  ModConfigSpec.DoubleValue cfg, String label, double value) {
         cfg.set(value);
+        persistConfig();
         AggroConfigCache.rebuild();
         ctx.getSource().sendSuccess(() -> tr("commands.alaaggro.set.ok", label, fmt(value)), true);
         return 1;
@@ -141,9 +153,27 @@ public final class AlaAggroCommand {
     private static int setBool(CommandContext<CommandSourceStack> ctx,
                                ModConfigSpec.BooleanValue cfg, String label, boolean value) {
         cfg.set(value);
+        persistConfig();
         AggroConfigCache.rebuild();
         ctx.getSource().sendSuccess(() -> tr("commands.alaaggro.set.ok", label, bool(value)), true);
         return 1;
+    }
+
+    /**
+     * Write the in-memory config back to disk. {@code ModConfigSpec.ConfigValue.set(...)} only
+     * updates the live value; without this, a {@code /alaaggro toggle} or {@code set} is lost the
+     * next time the world (or server) reloads the config file. Guarded by {@code isLoaded()} so a
+     * command issued before the config is ready can't crash, and wrapped so a save failure degrades
+     * to a session-only change instead of failing the command.
+     */
+    private static void persistConfig() {
+        try {
+            if (AlaAggroConfig.SPEC.isLoaded()) {
+                AlaAggroConfig.SPEC.save();
+            }
+        } catch (Throwable t) {
+            AlaAggro.LOGGER.warn("AlaAggro: failed to persist config to disk: {}", t.toString());
+        }
     }
 
     private static int exempt(CommandContext<CommandSourceStack> ctx, boolean add) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -174,6 +204,20 @@ public final class AlaAggroCommand {
                 if (!(entity instanceof Mob mob)) continue;
                 if (BossGuard.isBoss(mob)) continue;
                 MobAggroEventHandler.injectAggro(mob, s);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int pacifyLoadedMobs(MinecraftServer server) {
+        if (server == null) return 0;
+        int count = 0;
+        for (ServerLevel level : server.getAllLevels()) {
+            for (var entity : level.getAllEntities()) {
+                if (!(entity instanceof Mob mob)) continue;
+                if (BossGuard.isBoss(mob)) continue;
+                MobAggroEventHandler.pacify(mob);
                 count++;
             }
         }

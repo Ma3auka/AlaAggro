@@ -1,8 +1,6 @@
 package com.ma3auka.alaaggro.ai;
 
 import com.ma3auka.alaaggro.util.AggroConfigCache;
-import com.ma3auka.alaaggro.util.AquaticMobs;
-import com.ma3auka.alaaggro.util.FluidAggro;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,24 +21,6 @@ public class AggroAttackGoal extends MeleeAttackGoal {
 
     public AggroAttackGoal(PathfinderMob mob) {
         super(mob, 1.0D, true);
-    }
-
-    /**
-     * Run the normal melee logic (look, cooldown, strike), then cancel the chase path if the
-     * mob is buoyant in a fluid. {@code super.tick()} has already issued any {@code moveTo} and
-     * decremented the attack cooldown; stopping the navigation immediately afterwards drops the
-     * path before the mob acts on it, so it floats in place (held up by FloatGoal) instead of
-     * fighting the buoyancy and jittering across the surface (TASK-002 water / TASK-003 lava).
-     * The strike above still lands if the player is within reach, and aquatic mobs are never
-     * suspended — they swim after the player normally.
-     */
-    @Override
-    public void tick() {
-        super.tick();
-        if (FluidAggro.shouldSuspendChase(this.mob.isInWater(), this.mob.isInLava(),
-                this.mob.onGround(), AquaticMobs.isAquatic(this.mob))) {
-            this.mob.getNavigation().stop();
-        }
     }
 
     @Override

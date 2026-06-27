@@ -5,6 +5,18 @@ All notable changes to AlaAggro will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] — 2026-06-27
+
+### Added
+- Minecraft 26.2 (Chaos Cubed) support, published as a separate file. Cube-shaped mobs — the new Sulfur Cube along with vanilla slimes and magma cubes — keep their normal behaviour by default (they are in the built-in exclusion tag, because their jumping movement hops in a fixed direction rather than toward the player). Remove them from the tag with a datapack if you want them hostile.
+
+### Fixed
+- Land mobs (cows, sheep, zombies …) now swim across water toward you instead of bouncing up and down in deep water. The previous water/lava fix kept them out of the water entirely, which left any mob that was already in deep water stuck jumping in place; they now path across the surface and keep coming. Water creatures are unaffected and the water/lava surface no longer makes mobs jitter.
+- `/alaaggro toggle` and `/alaaggro set …` now save to the config file instead of only applying for the current session. Previously a change made in-game (for example, enabling the mod) was lost the next time the world or server reloaded, and you had to run the command again every time. The in-game Mods → AlaAggro → Settings screen already persisted; now the commands match it.
+
+### Changed
+- Toggling the mod now takes effect on already-loaded mobs immediately. Turning it **off** calms mobs that were already chasing you (instead of them finishing the current chase until the chunks reload), and turning it **on** aggros nearby mobs at once. `/alaaggro reload` follows the same rule — it no longer re-aggros mobs while the mod is disabled.
+
 ## [1.0.5] — 2026-06-27
 
 ### Fixed
