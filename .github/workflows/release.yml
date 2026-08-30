@@ -164,7 +164,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build both loaders
-        run: ./gradlew build --no-daemon
+        run: |
+          # Belt and braces: the execute bit is stored in git, but Windows does not carry it, so a
+          # file committed there can arrive without it and the build dies with "Permission denied".
+          chmod +x gradlew
+          ./gradlew build --no-daemon
 
       - name: Resolve and validate the artifacts
         id: jars
