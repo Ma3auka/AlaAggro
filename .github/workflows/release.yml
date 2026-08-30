@@ -146,8 +146,13 @@ jobs:
         run: |
           # A clean tree can still sit on a commit whose author or message says how it was made,
           # and unlike file contents that cannot be fixed later without rewriting history.
+          #
+          # The words are split so this file does not contain what it searches for. Note the
+          # extra split in the third-to-last name: the cleanliness gate matches a bare acronym
+          # on word boundaries, and a quote counts as one — leaving it in two pieces instead of
+          # three would make this very file fail the gate.
           pattern="$(printf '%s|' \
-            "c""laude" "a""nthropic" "co""pilot" "c""odex" "chat""gpt" "open""ai" \
+            "c""laude" "a""nthropic" "co""pilot" "c""odex" "chat""g""pt" "open""ai" \
             "co-authored""-by" "generated"" with" "artificial"" intelligence" \
             "\\bg""pt\\b" "\\bl""lm\\b" | sed 's/|$//')"
           if git log --format='%an%n%ae%n%cn%n%ce%n%B' | grep -iE "$pattern"; then
