@@ -65,8 +65,8 @@ jobs:
       # Modrinth. An empty project means the mod is not published there and every Modrinth step
       # is skipped — declared at job level because a step's own `env` is invisible to its `if`.
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-      MODRINTH_PROJECT: ''
-      MODRINTH_SLUG: ''
+      MODRINTH_PROJECT: 'GQeJXgZm'
+      MODRINTH_SLUG: 'ala-aggro'
       # Minecraft version as Modrinth names it, and the Fabric API project every Fabric build
       # depends on. Dependencies on Modrinth are declared per VERSION, not per file — which is
       # why each loader gets its own version rather than one version carrying two jars.
@@ -405,7 +405,7 @@ jobs:
               echo "CurseForge: https://www.curseforge.com/minecraft/mc-mods/alaaggro/files"
               if [ -n "$MODRINTH_PROJECT" ]; then
                 echo ""
-                echo "Modrinth: https://modrinth.com/mod//versions"
+                echo "Modrinth: https://modrinth.com/mod/ala-aggro/versions"
               fi
             fi
             echo ""
