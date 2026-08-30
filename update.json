@@ -3,8 +3,8 @@
   "promos": {
     "26.1-recommended": "1.0.6",
     "26.1-latest": "1.0.6",
-    "26.2-recommended": "1.0.6",
-    "26.2-latest": "1.0.6"
+    "26.2-recommended": "1.1.0",
+    "26.2-latest": "1.1.0"
   },
   "26.2": {
     "1.1.0": "Fabric support alongside NeoForge. Tamed pets, babies and named mobs can be protected; modded bosses are recognised; slimes, ghasts and phantoms keep their own AI. The exempt list now survives restarts. Fixes: reload and toggle no longer ignore the config, and damage no longer compounds on reload.",
