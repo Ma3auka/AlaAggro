@@ -1,0 +1,22 @@
+# Manifest for the game-test source set, which NeoForge loads as a mod of its own so its data pack
+# merges with the main one instead of shadowing it.
+#
+# Literal values, not ${placeholders}: processResources only expands the main source set, and an
+# unexpanded placeholder here would fail the load with a confusing version error.
+#
+# modLoader / loaderVersion are deliberately absent: since 26.2 FML treats them as optional, and
+# spelling them out here makes it warn about a deprecated loader on every test run.
+license="MIT"
+
+[[mods]]
+modId="alaaggro_gametest"
+version="1.0.0"
+displayName="AlaAggro GameTest"
+description='''In-game tests for AlaAggro. Never shipped: this source set is not part of the release jar.'''
+
+[[dependencies.alaaggro_gametest]]
+    modId="alaaggro"
+    type="required"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"

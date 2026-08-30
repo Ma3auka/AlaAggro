@@ -5,6 +5,27 @@ All notable changes to AlaAggro will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-08-30
+
+### Added
+- **Fabric support.** The mod now ships as two jars from one codebase — `alaaggro-fabric-…` and `alaaggro-neoforge-…` — and both behave identically, because all the behaviour lives in a shared module and each loader only supplies its entry point, its event hooks and its config file. Fabric needs Fabric API.
+- Tamed pets are left alone by default. Your own wolf, cat, parrot or horse no longer turns on you. Baby animals and mobs wearing a name tag can be protected too (`excludeBabies`, `excludeNamed`, both off by default). All three are switchable in-game: `/alaaggro set tamed|babies|named`.
+- Modded bosses are protected. Alongside the three vanilla bosses, any mob another mod marks with the conventional boss tag (`c:bosses`) is left untouched, so custom boss fights keep their scripted AI.
+- The exempt list is saved with the world. `/alaaggro exempt` used to be forgotten on every restart; it now persists (`persistExempt`, on by default) and no longer leaks between single-player worlds in one game session.
+- New settings for tuning: `scanIntervalTicks` and `scanRadius` decide how often and how far the mod looks for mobs to keep aggressive, and `minMovementSpeed` / `followRange` expose two values that used to be fixed in code.
+
+### Fixed
+- Mobs that hop or fly are no longer broken. Slimes on older versions ended up standing still with no AI at all, and ghasts and phantoms had their fireball and dive behaviour wiped roughly once a second, because the mod cleared their goals and then had nothing to rebuild them with. Such mobs are now left alone entirely.
+- `/alaaggro reload` and `/alaaggro toggle` no longer ignore your config. They used to make every loaded mob hostile except bosses — villagers, blacklisted mobs and mobs in blacklisted dimensions included — so a reload quietly undid those settings. All three paths now apply exactly the same rules.
+- Damage and speed no longer compound. Applying the config repeatedly (a reload, a toggle) multiplied a mob's damage again each time — with a x2 multiplier, three reloads meant eight times vanilla damage — and switching the mod off left the inflated values behind. The changes are now applied as removable modifiers, so they land on the same numbers however often they are applied, and are undone cleanly.
+- Reactive-only mode really is reactive. Mobs were still being handed the player as a target when they spawned, so they attacked unprovoked despite the setting.
+- Call for help ignores creative and spectator players, matching every other part of the mod, and no longer alerts mobs the config says to leave alone.
+
+### Changed
+- Two settings that had stopped doing anything were removed: `addMeleeGoalToPassive` and `removePanicGoal`. Since the mod rebuilds a mob's brain wholesale, both were read by nothing while still appearing in the config and in `/alaaggro status`. `/alaaggro status` now reports the pet protections instead.
+- Config changes made in-game reach mobs already in the world without a reload — each mob remembers which config it was built under and is rebuilt when that changes.
+- All ten translations now cover the whole config screen. Eight of them were missing every field label, so those players saw raw keys such as `alaaggro.configuration.damageMultiplier`.
+
 ## [1.0.6] — 2026-06-27
 
 ### Added

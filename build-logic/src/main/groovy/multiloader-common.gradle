@@ -1,0 +1,85 @@
+// Settings shared by all three subprojects: the java toolchain, the jar manifest, and the metadata
+// substitution that turns one set of gradle.properties values into both loaders' manifests.
+
+plugins {
+    id 'java-library'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    // alaaggro-fabric-26.2-1.0.7.jar / alaaggro-neoforge-26.2-1.0.7.jar — the loader is part of the
+    // file name so both can sit in one CurseForge project without colliding.
+    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // Name deprecated symbols instead of counting them; javac stops at 100 warnings by default and
+    // then misreports the total.
+    options.compilerArgs << '-Xlint:deprecation' << '-Xmaxwarns' << '2000'
+}
+
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_${mod_name}" }
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_name,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : project.jar.archiveVersion,
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_authors,
+                'Built-On-Minecraft'    : minecraft_version
+        ])
+    }
+}
+
+// One source of truth for mod metadata. Every key listed here must exist in gradle.properties —
+// a missing one fails processResources rather than silently shipping a literal ${placeholder}.
+processResources {
+    var expandProps = [
+            'version'                      : version,
+            'group'                        : project.group, // else this resolves to the task's group
+            'minecraft_version'            : minecraft_version,
+            'minecraft_version_range'      : minecraft_version_range,
+            'fabric_version'               : fabric_version,
+            'fabric_loader_version'        : fabric_loader_version,
+            'neoforge_version'             : neoforge_version,
+            'neoforge_loader_version_range': neoforge_loader_version_range,
+            'mod_name'                     : mod_name,
+            'mod_id'                       : mod_id,
+            'mod_authors'                  : mod_authors,
+            'mod_credits'                  : mod_credits,
+            'mod_license'                  : mod_license,
+            'description'                  : project.description,
+            'display_url'                  : display_url,
+            'issue_tracker_url'            : issue_tracker_url,
+            'update_json_url'              : update_json_url,
+            'java_version'                 : java_version
+    ]
+
+    // JSON needs newlines escaped; TOML takes them raw.
+    var jsonExpandProps = expandProps.collectEntries { key, value ->
+        [(key): value instanceof String ? value.replace('\n', '\\n') : value]
+    }
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand expandProps
+    }
+    filesMatching(['fabric.mod.json', 'pack.mcmeta']) {
+        expand jsonExpandProps
+    }
+
+    inputs.properties(expandProps)
+}

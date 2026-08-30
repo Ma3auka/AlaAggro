@@ -1,0 +1,74 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    // NeoForm, not a NeoForge version: this gives common/ a vanilla Minecraft classpath with no
+    // loader API on it, so a NeoForge-only call cannot slip into shared code unnoticed.
+    neoFormVersion = neo_form_version
+
+    // Mob.goalSelector / targetSelector are protected in vanilla; rewriting a mob's brain needs
+    // them. NeoForge patches them public in its own jar, which is why this was invisible while the
+    // mod was NeoForge-only.
+    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+}
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:${junit_version}")
+    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+}
+
+test {
+    useJUnitPlatform()
+}
+
+sourceSets {
+    // Game-test bodies live outside main/ so they never ship in a release jar.
+    gametest {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+    }
+}
+
+// Type-check the scenarios on every build, even though they run inside the loaders.
+tasks.named('check') {
+    dependsOn tasks.named('compileGametestJava')
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonGametestJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+// Publish the source and resource DIRECTORIES for the loader projects to compile themselves.
+// `singleFile` means each of these source sets must keep exactly one source directory.
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+    commonGametestJava sourceSets.gametest.java.sourceDirectories.singleFile
+}
+
+// Tell Gradle which loader this project's variants belong to, so it never resolves a Loom-remapped
+// variant where a NeoForge-remapped one is wanted, or vice versa.
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements'].each { variant ->
+    configurations.named(variant) { attributes { attribute(loaderAttribute, 'common') } }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
+        configurations.named(variant) { attributes { attribute(loaderAttribute, 'common') } }
+    }
+}

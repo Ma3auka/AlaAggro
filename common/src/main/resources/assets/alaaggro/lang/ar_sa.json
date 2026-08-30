@@ -1,0 +1,53 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: تمت إعادة تحميل الإعدادات، تم تحديث %s من المخلوقات.",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | مفعّل: %s | الوضع التفاعلي: %s",
+  "commands.alaaggro.status.numbers": "الضرر: x%s | السرعة: x%s | الحد الأقصى للسرعة: %s",
+  "commands.alaaggro.status.helpmem": "طلب المساعدة: %s (نطاق %s) | الذاكرة طويلة الأمد: %s",
+  "commands.alaaggro.status.protection": "القرويون عدائيون: %s | المروَّضة محمية: %s | الصغار محمية: %s | ذات الأسماء محمية: %s",
+  "commands.alaaggro.status.lists": "الأبعاد المحظورة: %s | اللاعبون المعفون: %s",
+  "commands.alaaggro.status.divider": "--- المخلوقات العدائية النشطة (القطع المحمّلة) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — مفعّل: %s، تفاعلي: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro مفعّل = %s",
+  "commands.alaaggro.set.ok": "تم ضبط %s إلى %s",
+
+  "commands.alaaggro.exempt.added": "%s معفى الآن من العدوان.",
+  "commands.alaaggro.exempt.removed": "%s لم يعد معفى من العدوان.",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "إعدادات خادم AlaAggro",
+
+  "alaaggro.configuration.general": "عام",
+  "alaaggro.configuration.aggression": "العدوانية",
+  "alaaggro.configuration.callForHelp": "طلب المساعدة",
+  "alaaggro.configuration.memory": "الذاكرة",
+  "alaaggro.configuration.performance": "الأداء",
+  "alaaggro.configuration.lists": "قوائم المخلوقات",
+
+  "alaaggro.configuration.enabled": "تفعيل AlaAggro",
+  "alaaggro.configuration.hostileVillagers": "قرويون عدائيون",
+  "alaaggro.configuration.reactiveOnly": "العدوان التفاعلي فقط",
+  "alaaggro.configuration.dimensionBlacklist": "قائمة الأبعاد المحظورة",
+  "alaaggro.configuration.excludeTamed": "عدم مهاجمة الحيوانات المروَّضة",
+  "alaaggro.configuration.excludeBabies": "عدم مهاجمة الصغار",
+  "alaaggro.configuration.excludeNamed": "عدم مهاجمة المخلوقات ذات بطاقة الاسم",
+  "alaaggro.configuration.persistExempt": "حفظ قائمة المعفيين مع العالم",
+
+  "alaaggro.configuration.damageMultiplier": "مضاعف الضرر",
+  "alaaggro.configuration.speedMultiplier": "مضاعف السرعة",
+  "alaaggro.configuration.perCategorySpeedCap": "الحد الأقصى للسرعة (لكل فئة)",
+  "alaaggro.configuration.defaultAttackDamage": "ضرر الهجوم الافتراضي",
+  "alaaggro.configuration.minMovementSpeed": "الحد الأدنى لسرعة الحركة",
+  "alaaggro.configuration.followRange": "مدى الملاحقة (بالكتل)",
+
+  "alaaggro.configuration.radius": "نطاق التنبيه (بالكتل)",
+  "alaaggro.configuration.longTermMemory": "الذاكرة طويلة الأمد",
+
+  "alaaggro.configuration.scanIntervalTicks": "فترة المسح (تِكّات)",
+  "alaaggro.configuration.scanRadius": "نطاق المسح (بالكتل)",
+
+  "alaaggro.configuration.entityBlacklist": "قائمة الكيانات المحظورة",
+  "alaaggro.configuration.entityWhitelist": "قائمة الكيانات المسموح بها"
+}

@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "alaaggro-gametest",
+	"version": "1.0.0",
+	"name": "AlaAggro GameTest",
+	"environment": "*",
+	"depends": {
+		"alaaggro": "*"
+	},
+	"entrypoints": {
+		"fabric-gametest": [
+			"com.ma3auka.alaaggro.gametest.AlaAggroGameTest"
+		]
+	}
+}

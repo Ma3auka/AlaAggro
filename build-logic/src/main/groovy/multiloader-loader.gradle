@@ -1,0 +1,42 @@
+// Applied by fabric/ and neoforge/. Feeds them the shared source and resource directories from
+// common/, so each loader compiles the same code against its own remapped Minecraft classpath.
+//
+// The sources are shared as DIRECTORIES, not as a jar dependency: common/ is compiled against plain
+// Minecraft (NeoForm), while each loader needs those same classes compiled against its own remapped
+// jar. Handing over a compiled artifact would ship classes built against the wrong mappings.
+
+plugins {
+    id 'multiloader-common'
+}
+
+configurations {
+    commonJava {
+        canBeResolved = true
+    }
+    commonResources {
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    // Only for common's own compile dependencies and a correct IDE graph — the classes themselves
+    // arrive as sources below. The loader attribute keeps Gradle from resolving a remapped variant.
+    compileOnly(project(':common')) {
+        def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+        attributes {
+            attribute(loaderAttribute, 'common')
+        }
+    }
+    commonJava(project(path: ':common', configuration: 'commonJava'))
+    commonResources(project(path: ':common', configuration: 'commonResources'))
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn(configurations.commonJava)
+    source(configurations.commonJava)
+}
+
+processResources {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+}

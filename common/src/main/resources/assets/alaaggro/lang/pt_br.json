@@ -1,0 +1,53 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: configuração recarregada, %s mobs aplicados.",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | ativo: %s | reativo: %s",
+  "commands.alaaggro.status.numbers": "Dano: x%s | Velocidade: x%s | Limite de velocidade: %s",
+  "commands.alaaggro.status.helpmem": "Pedido de ajuda: %s (raio %s) | Memória de longo prazo: %s",
+  "commands.alaaggro.status.protection": "Aldeões hostis: %s | Domesticados protegidos: %s | Filhotes protegidos: %s | Com nome protegidos: %s",
+  "commands.alaaggro.status.lists": "Dimensões na lista negra: %s | Jogadores isentos: %s",
+  "commands.alaaggro.status.divider": "--- Mobs agressivos ativos (chunks carregados) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — ativo: %s, reativo: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro ativo = %s",
+  "commands.alaaggro.set.ok": "%s definido como %s",
+
+  "commands.alaaggro.exempt.added": "%s agora está isento da agressão.",
+  "commands.alaaggro.exempt.removed": "%s não está mais isento da agressão.",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "Configurações de servidor do AlaAggro",
+
+  "alaaggro.configuration.general": "Geral",
+  "alaaggro.configuration.aggression": "Agressão",
+  "alaaggro.configuration.callForHelp": "Pedido de ajuda",
+  "alaaggro.configuration.memory": "Memória",
+  "alaaggro.configuration.performance": "Desempenho",
+  "alaaggro.configuration.lists": "Listas de mobs",
+
+  "alaaggro.configuration.enabled": "Ativar o AlaAggro",
+  "alaaggro.configuration.hostileVillagers": "Aldeões hostis",
+  "alaaggro.configuration.reactiveOnly": "Somente agressão reativa",
+  "alaaggro.configuration.dimensionBlacklist": "Lista negra de dimensões",
+  "alaaggro.configuration.excludeTamed": "Não atacar animais domesticados",
+  "alaaggro.configuration.excludeBabies": "Não atacar filhotes",
+  "alaaggro.configuration.excludeNamed": "Não atacar mobs com etiqueta de nome",
+  "alaaggro.configuration.persistExempt": "Salvar a lista de isentos com o mundo",
+
+  "alaaggro.configuration.damageMultiplier": "Multiplicador de dano",
+  "alaaggro.configuration.speedMultiplier": "Multiplicador de velocidade",
+  "alaaggro.configuration.perCategorySpeedCap": "Limite de velocidade (por categoria)",
+  "alaaggro.configuration.defaultAttackDamage": "Dano de ataque padrão",
+  "alaaggro.configuration.minMovementSpeed": "Velocidade de movimento mínima",
+  "alaaggro.configuration.followRange": "Alcance de perseguição (blocos)",
+
+  "alaaggro.configuration.radius": "Raio de aviso (blocos)",
+  "alaaggro.configuration.longTermMemory": "Memória de longo prazo",
+
+  "alaaggro.configuration.scanIntervalTicks": "Intervalo de varredura (ticks)",
+  "alaaggro.configuration.scanRadius": "Raio de varredura (blocos)",
+
+  "alaaggro.configuration.entityBlacklist": "Lista negra de entidades",
+  "alaaggro.configuration.entityWhitelist": "Lista branca de entidades"
+}

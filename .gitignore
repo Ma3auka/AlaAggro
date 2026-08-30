@@ -35,6 +35,10 @@ bin/
 ### Minecraft Modding ###
 run/
 !**/src/**/run/
+# Loom and ModDevGradle name their dev-run directories "runs" (fabric/runs, neoforge/runs).
+# Without this they would be committed: game logs, saved worlds and dev config files.
+runs/
+!**/src/**/runs/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/

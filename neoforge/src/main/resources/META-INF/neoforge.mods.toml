@@ -1,0 +1,34 @@
+# Written out in full, including modLoader and loaderVersion. NeoForge 26.x defaults both when they
+# are missing, which hides the omission locally and then fails on an older target — that is exactly
+# how a release once shipped unloadable.
+modLoader="javafml"
+loaderVersion="${neoforge_loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="${issue_tracker_url}"
+
+[[mods]]
+modId="${mod_id}"
+version="${version}"
+displayName="${mod_name}"
+updateJSONURL="${update_json_url}"
+displayURL="${display_url}"
+# iconFile, not logoFile: 26.2 split the two slots, and a square image under logoFile is stretched
+# across the mod list's banner and warns on every launch.
+iconFile="icon.png"
+credits="${mod_credits}"
+authors="${mod_authors}"
+description='''${description}'''
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neoforge_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

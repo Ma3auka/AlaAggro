@@ -10,115 +10,126 @@ For studio-level testing strategy and rationale, see `_docs/14_TESTING_STRATEGY.
 
 | Tier | Tool | Run with |
 |---|---|---|
-| 1 — Unit | JUnit 5 | `./gradlew test` |
-| 2 — GameTest | NeoForge `@GameTest` | `./gradlew runGameTestServer` (Phase 2) |
+| 1 — Unit | JUnit 5 | `./gradlew :common:test` |
+| 2 — GameTest | shared scenarios, both loaders | `./gradlew :fabric:runGameTest` · `./gradlew :neoforge:runGameTests` |
+
+**Status: both tiers implemented.** 31 unit cases and 11 in-game scenarios, the latter running on Fabric *and* NeoForge from one set of bodies.
+
+The Fabric game-test lane is part of `:fabric:build`. The NeoForge lane must be invoked explicitly — it is not wired into `build`.
 
 ---
 
 ## Tier 1 — Unit tests
 
-**Location:** `src/test/java/com/ma3auka/alaaggro/unit/`
-**Status:** ✅ Phase 1 implemented — all 10 cases passing (`./gradlew test`)
-**Cases:** 10 (`ExemptRegistryTest` × 7, `AggroSnapshotDefaultsTest` × 3)
+**Location:** `common/src/test/java/com/ma3auka/alaaggro/unit/`
+**Cases:** 31 (`AggroEligibilityTest` × 15, `ExemptRegistryTest` × 9, `AggroSettingsDefaultsTest` × 7)
 
-### `ExemptRegistryTest` — global exempt-player set
+Only `common/src/main/java/com/ma3auka/alaaggro/core/` is reachable from here — it is the part of the mod written without a single Minecraft import. That is not an accident: the eligibility rules were deliberately moved there so they could be tested at all.
 
-`ExemptRegistry` is the only thing standing between an exempt player and the entire mob population aggroing on them. It is read every server tick from many threads and mutated from command handlers. Bugs are silent — a player just keeps getting hit.
+### `AggroEligibilityTest` — who gets made hostile
 
-| # | Test | Bug class caught |
-|---|---|---|
-| 1 | `add_returnTrueOnceThenFalse` | Idempotency contract for `/aggro exempt add`. |
-| 2 | `isExempt_tracksMembership` | Read after add/remove returns correct value. |
-| 3 | `remove_signalContract` | Distinguishes "removed" from "wasn't there". |
-| 4 | `clear_removesEverything` | Server stop / reload doesn't leak entries. |
-| 5 | `view_isLiveReflection` | Inspection commands see the real state. |
-| 6 | `view_rejectsMutation` | View leak — caller can't corrupt internal set via returned reference. |
-| 7 | `add_isThreadSafe` | Backing set must be `ConcurrentHashMap.newKeySet()`; regressing to plain `HashSet` is caught immediately. |
-
-**Real bug this catches:** if someone "simplifies" the backing collection from `ConcurrentHashMap.newKeySet()` to `HashSet` thinking "it's just a few UUIDs", server tick + command thread can race and lose entries — exempt players un-exempt themselves randomly. Test #7 (16 threads × 250 adds) reproduces this in milliseconds.
-
-### `AggroSnapshotDefaultsTest` — fallback snapshot when config not loaded
-
-`Snapshot.defaults()` is what every event handler sees between mod construction and config-load (and when `SPEC.isLoaded() == false`). Drift between config defaults and snapshot defaults = mod misbehaves at startup before any user-visible config exists.
+The rules decide, for every mob that spawns, whether the mod rewrites its brain. A wrong answer is either a mod that does nothing, or a mod that wrecks something it was told to leave alone.
 
 | # | Test | Bug class caught |
 |---|---|---|
-| 8 | `defaults_pinAllFields` | Pin every default value. Any drift = build breaks with diff showing the changed field. |
-| 9 | `get_neverNullEvenBeforeLoad` | NPE in hot path before config loads. |
-| 10 | `snapshot_isValueType` | Record contract — equals/hashCode by content, two `defaults()` calls are equal. |
+| 1 | `plainMobIsEligible` | The baseline works at all. |
+| 2 | `disabledModTouchesNothing` | Master switch is honoured before anything else. |
+| 3 | `bossIsProtected` | A boss fight's scripted AI is never wiped. |
+| 4 | `mobWithoutWalkingAiIsLeftAlone` | The TASK-007/008 class: wiping a brain we cannot rebuild. |
+| 5 | `bossOutranksWalkingAi` | Rule precedence — a boss stays reported as a boss. |
+| 6 | `villagersFollowTheirOwnSwitch` | Both directions of the villager option. |
+| 7 | `blacklistedDimensionIsSkipped` | Dimension blacklist applies, and only there. |
+| 8 | `taggedMobIsSkipped` | Datapack exclusion tag is honoured. |
+| 9 | `listsBehaveAsDocumented` | Blacklist skips; a non-empty whitelist restricts. |
+| 10 | `blacklistWinsOverWhitelist` | Pins the precedence rule an ordering change would flip. |
+| 11–14 | `petProtections` (parameterised) | Each protection fires on its own trait and nothing else. |
+| 15 | `petProtectionsAreOptional` | Protections can actually be switched off. |
 
-**Real bug this catches:** developer adds new config field `enableScreaming`, wires it into `AggroConfigCache.rebuild()`, but forgets to add it to `Snapshot.defaults()`. Compiles fine. Server starts → handlers see snapshot from before reload, screaming is "false" instead of intended "true" for first 1-2 seconds. Test #8 fails on the missing record component or wrong value.
+**Real bug this catches:** the checks used to be hand-written in the join handler, written again in the periodic scan, and skipped entirely by `/alaaggro reload`. A villager left alone at spawn came back hostile after any reload. With one rule set behind one function, that drift is impossible — and these tests pin the rules themselves.
 
-> **History — fluid behaviour (TASK-002/003 → TASK-006).** 1.0.5 fixed the water/lava surface
-> jitter with a pure boolean gate (`FluidAggro.shouldSuspendChase`) that paused the chase while a
-> land mob was buoyant, covered by a `FluidAggroTest` truth table. In-game testing on 26.2 showed
-> the side effect: mobs in *deep* water (never touching ground) bounced vertically forever and could
-> not cross a pond to the player. TASK-006 replaced the suspend approach with letting the navigator
-> path across water (`canFloat(true)`), so mobs swim to the player. `FluidAggro` + `FluidAggroTest`
-> were removed (the boolean gate no longer exists). The water/lava behaviour is now purely in-game
-> behaviour → covered by Tier 2 GameTest scenario #7 below.
+### `AggroSettingsDefaultsTest` — the config contract
+
+| # | Test | Bug class caught |
+|---|---|---|
+| 16 | `defaults_pinAllFields` | Every default value pinned; drift breaks the build with the field named. |
+| 17 | `get_neverNullBeforeLoad` | NPE on the hot path before a config file exists. |
+| 18 | `settings_areAValueType` | Record contract — "did the config change?" checks stay meaningful. |
+| 19 | `reload_bumpsGeneration` | If the counter froze, reloads would never reach mobs already in the world. |
+| 20 | `options_areDeclaredConsistently` | Duplicate config paths, and options that map to no settings field. |
+| 21 | `read_clampsOutOfRangeValues` | A hand-edited file behaves identically on both loaders. |
+| 22 | `defaults_matchDeclaredOptions` | The declared defaults and the shared snapshot cannot disagree. |
+
+**Real bug this catches:** a developer adds an option, wires it into one loader's backend, and forgets the shared defaults. The mod then behaves one way for the first second of every server start and another way afterwards.
+
+### `ExemptRegistryTest` — the exempt-player set
+
+Read from the server tick, written from command handlers. Bugs here are silent: a player just keeps getting hit.
+
+| # | Test | Bug class caught |
+|---|---|---|
+| 23–27 | add/remove/isExempt/clear/view contracts | Command semantics and state leaks between worlds. |
+| 28 | `view_rejectsMutation` | A caller cannot corrupt the backing set through the returned view. |
+| 29 | `add_isThreadSafe` | Regressing to a plain `HashSet` loses entries under concurrency. |
+| 30 | `changeListener_firesOnRealChangesOnly` | Persistence hook stops firing → list is empty after restart. |
+| 31 | `replaceAll_doesNotNotify` | Loading is not a change; notifying there re-saves on every world load. |
 
 ---
 
-## Tier 2 — NeoForge GameTests
+## Tier 2 — GameTests
 
-**Location:** `src/main/java/com/ma3auka/alaaggro/gametest/` (to be created)
-**Status:** 🟡 Phase 2 — not implemented yet
+**Bodies:** `common/src/gametest/java/com/ma3auka/alaaggro/gametest/AlaAggroScenarios.java`
+**Glue:** `fabric/src/gametest/java/…/AlaAggroGameTest.java` · `neoforge/src/gametest/java/…/NeoForgeGameTests.java`
 
-### Planned scenarios (priority order)
+One set of bodies, two lanes. Both loaders therefore prove the same behaviour, which is the point: the whole risk of a multi-loader mod is the two jars quietly diverging.
 
-1. **`mobGetsAggroOnJoin`** — spawn a Cow, after 1 tick its `goalSelector` contains `AggroAttackGoal`.
-2. **`bossNotInjected`** — spawn an EnderDragon, no `AggroAttackGoal` injected (we never touch boss AI).
-3. **`exemptPlayerNotTargeted`** — add player to `ExemptRegistry`, spawn mob nearby, after 60 ticks mob still has `target == null`.
-4. **`disabledModSkipsInjection`** — set `enabled=false`, spawn cow, no goal injection.
-5. **`blacklistedEntitySkipped`** — entity in `ENTITY_BLACKLIST`, no injection.
-6. **`whitelistOnlyAllowedInjected`** — non-empty whitelist excluding cow → cow not injected; including cow → cow injected.
-7. **`landMobSwimsToPlayerInWater`** — spawn a Cow across deep water from a player, after N ticks its horizontal distance to the player has decreased (it swims across instead of bouncing in place). Verifies the TASK-006 water-crossing fix and guards against the TASK-002/003 surface jitter regressing.
-8. **`waterMobHasNoFloatGoal`** — spawn a Cod, its `goalSelector` contains no `FloatGoal` (so it can't leap out of water) but does contain `AggroAttackGoal`.
+| Scenario | What it proves |
+|---|---|
+| `passive_mob_gets_hostile_brain` | A cow really turns hostile, and the vanilla animal goals are gone — leaving them in is what kept the navigator busy so the mob never chased. |
+| `mob_without_walking_ai_is_untouched` | A ghast's goal count is byte-for-byte unchanged. Closes TASK-007/008. |
+| `boss_is_untouched` | Boss AI is never rewritten. |
+| `tagged_mob_is_untouched` | The `alaaggro:excluded` tag works end to end, tag loading included. |
+| `tamed_pet_is_recognised` | Taming is read correctly from a live mob — vanilla answers it three different ways, and missing a branch means somebody's wolf attacks them. |
+| `land_mob_keeps_float_goal` | Land mobs can still cross water (TASK-006 fix). |
+| `water_mob_has_no_float_goal` | Fish do not surface and leap (TASK-002/003 fix). |
+| `repeated_injection_does_not_compound` | Six injections land on the same damage as one. Catches the compounding-multiplier bug directly. |
+| `pacify_restores_the_mob` | Switching off removes goals *and* the attribute changes, rather than baking them in. |
+| `stale_mob_is_rebuilt` | A config change reaches mobs already in the world. |
 
-### Test isolation requirements
+### Notes for adding a scenario
 
-All AlaAggro GameTests **must** use:
-- `@BeforeBatch` calling `ExemptRegistry.clear()` and `AggroConfigCache.rebuild()` to reset global state.
-- `succeedWhen()` (not `succeedIf()`) — `TickAggroHandler` runs every 20 ticks, immediate assertion races.
-- `timeoutTicks = 60` minimum for tick-driven assertions.
-
-**Why deferred:** GameTest API on NeoForge 26.1 needs first-run verification before we commit to specific imports / helper signatures. See `_docs/14_TESTING_STRATEGY.md` §5.
+- Put the body in `AlaAggroScenarios`, then add a wrapper in **both** glue classes. A scenario running on one loader only defeats the purpose.
+- Do not call anything that walks the whole server (`applyToLoadedMobs`, `pacifyLoadedMobs`) — game tests share a world, and a global sweep will disturb whatever is running alongside.
+- Spawning a mob already fires the join event, so a scenario cannot observe a mob "before" the mod sees it. Assert on the resulting state, or on the facts, instead.
+- The NeoForge lane needs its own rig structure (`neoforge/src/gametest/resources/data/alaaggro/structure/gametest_rig.nbt`, 8×8×8 of air). `minecraft:empty` is 1×1×1 and makes tests fail depending on where the server places the rig.
 
 ---
 
-## Coverage map (what is and isn't tested)
+## Coverage map
 
-| Production class / method | Tier 1 | Tier 2 | Why not / Notes |
+| Production class | Tier 1 | Tier 2 | Notes |
 |---|---|---|---|
-| `ExemptRegistry` (full API) | ✅ 100% | — | Pure Java + ConcurrentHashMap, fully covered. |
-| `AquaticMobs.isAquatic(Mob)` | ❌ | 🟡 planned | `instanceof` + `canBreatheUnderwater()` on MC entities — GameTest only. |
-| `AggroConfigCache.Snapshot.defaults()` | ✅ | — | All fields pinned. |
-| `AggroConfigCache.get()` | ✅ partial | — | Null-safety only; full state is integration. |
-| `AggroConfigCache.rebuild()` | ❌ | 🟡 planned | Reads `ModConfigSpec` — needs MC bootstrap. |
-| `BossGuard.isBoss(Entity)` | ❌ | 🟡 planned | `instanceof` on MC entity classes — GameTest only. |
-| `MobAggroEventHandler.injectAggro` | ❌ | 🟡 planned | High priority for Tier 2 — load-bearing AI logic; branches land (FloatGoal + canFloat true → swims across water) vs aquatic brain. |
-| `MobAggroEventHandler.onEntityJoin` | ❌ | 🟡 planned | Event handler — GameTest only. |
-| `TickAggroHandler.onServerTick` | ❌ | 🟡 planned | Defensive layer — Tier 2 must verify. |
-| `AggroAttackGoal` | ❌ | 🟡 planned | Goal AI — GameTest only. |
-| `CallForHelpHandler` | ❌ | 🟡 planned | Event handler. |
-| `MemoryHandler` | ❌ | 🟡 planned | Event handler. |
-| `AttributeHandler` | ❌ | 🟡 planned | Event handler. |
-| `AlaAggroCommand` | ❌ | 🟡 planned | Command — GameTest only. |
-| `AlaAggroConfig.SPEC` | ❌ | ❌ | NeoForge handles config parsing; not our code. |
+| `core/AggroEligibility` | ✅ full | ✅ indirect | The rules, tested directly. |
+| `core/ExemptRegistry` | ✅ full | — | Pure Java + concurrency. |
+| `core/AggroSettings` / `ConfigOption` | ✅ full | — | Defaults, clamping, declaration consistency. |
+| `core/AggroConfig` | ✅ partial | ✅ generation | Backend binding is loader-specific. |
+| `entity/AggroInjector` | ❌ | ✅ | Attribute modifiers, goal rebuild, pacify. |
+| `entity/MobFactsReader` | ❌ | ✅ | Taming detection on a live mob. |
+| `entity/BossGuard` | ❌ | ✅ | Vanilla bosses; the `c:bosses` tag path is untested. |
+| `entity/AquaticMobs` | ❌ | ✅ | Via the two float-goal scenarios. |
+| `ai/AggroMarkerGoal` | ❌ | ✅ | Generation staleness. |
+| `ai/AggroAttackGoal` | ❌ | ❌ | Damage fallback needs a target taking damage — not covered. |
+| `handler/AggroHandlers` (join) | ❌ | ✅ | Every scenario goes through it. |
+| `handler/AggroHandlers` (tick, call-for-help, memory, teleport) | ❌ | ❌ | Needs a player in the world. **The largest gap.** |
+| `world/ExemptStorage` | ❌ | ❌ | Needs a world save/reload cycle. |
+| `command/AlaAggroCommand` | ❌ | ❌ | Needs a command source. |
+| Both config backends | ❌ | ❌ | Loader-specific; the Fabric JSON round-trip is unverified. |
+
+### Known gaps, in priority order
+
+1. **Player-driven behaviour** — chasing, call for help, long-term memory, teleport reset. All of it runs only when a player is present, and none of it is covered. A scenario using a fake player would close most of this.
+2. **`ExemptStorage` round-trip** — the list is written and read across a restart, which no current test exercises.
+3. **Config backends** — a bad overload in the NeoForge backend crashed server start during this very rewrite, and only the game tests caught it. A round-trip test per backend would catch it earlier and cheaper.
 
 ---
 
-## Adding a new test
-
-1. Find / extract the pure logic. If a method takes MC types, look for math/branching that could move into a primitive-arg helper.
-2. Add the test under `src/test/java/com/ma3auka/alaaggro/unit/<Name>Test.java`.
-3. Open the test class with a `Why this matters:` javadoc block — what bug class does it catch?
-4. Run `./gradlew test` and confirm green.
-5. Add a row to the table above with the exact bug class.
-
-If the bug class can only be expressed as in-game behaviour, defer to Tier 2 (Phase 2 backlog).
-
----
-
-*Last updated: 2026-06-27 — removed `FluidAggroTest`/`FluidAggro` (TASK-006 replaced the suspend gate with canFloat-across-water swimming); back to 10 unit cases. Phase 2 (GameTest) still deferred.*
+*Last updated: 2026-08-30 — multi-loader rewrite: 10 → 31 unit cases, Tier 2 implemented (11 scenarios on both loaders).*

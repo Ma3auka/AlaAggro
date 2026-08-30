@@ -1,0 +1,53 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: 設定を再読み込みしました。%s 体のモブに適用しました。",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | 有効: %s | リアクティブ: %s",
+  "commands.alaaggro.status.numbers": "ダメージ: x%s | 速度: x%s | 速度上限: %s",
+  "commands.alaaggro.status.helpmem": "援軍要請: %s (半径 %s) | 長期記憶: %s",
+  "commands.alaaggro.status.protection": "敵対的な村人: %s | 懐いたモブを保護: %s | 子どもを保護: %s | 名前付きを保護: %s",
+  "commands.alaaggro.status.lists": "ブラックリストのディメンション: %s | 免除プレイヤー: %s",
+  "commands.alaaggro.status.divider": "--- アクティブな敵対モブ (読み込み済みチャンク) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — 有効: %s, リアクティブ: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro 有効 = %s",
+  "commands.alaaggro.set.ok": "%s を %s に設定しました",
+
+  "commands.alaaggro.exempt.added": "%s は敵対モブから免除されました。",
+  "commands.alaaggro.exempt.removed": "%s の免除を解除しました。",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro サーバー設定",
+
+  "alaaggro.configuration.general": "一般",
+  "alaaggro.configuration.aggression": "敵対性",
+  "alaaggro.configuration.callForHelp": "援軍要請",
+  "alaaggro.configuration.memory": "記憶",
+  "alaaggro.configuration.performance": "パフォーマンス",
+  "alaaggro.configuration.lists": "モブリスト",
+
+  "alaaggro.configuration.enabled": "AlaAggro を有効にする",
+  "alaaggro.configuration.hostileVillagers": "敵対的な村人",
+  "alaaggro.configuration.reactiveOnly": "反撃時のみ敵対する",
+  "alaaggro.configuration.dimensionBlacklist": "ディメンションのブラックリスト",
+  "alaaggro.configuration.excludeTamed": "懐いたペットを狙わない",
+  "alaaggro.configuration.excludeBabies": "子どもの動物を狙わない",
+  "alaaggro.configuration.excludeNamed": "名前付きのモブを狙わない",
+  "alaaggro.configuration.persistExempt": "免除リストをワールドに保存する",
+
+  "alaaggro.configuration.damageMultiplier": "ダメージ倍率",
+  "alaaggro.configuration.speedMultiplier": "速度倍率",
+  "alaaggro.configuration.perCategorySpeedCap": "速度上限 (カテゴリごと)",
+  "alaaggro.configuration.defaultAttackDamage": "デフォルトの攻撃ダメージ",
+  "alaaggro.configuration.minMovementSpeed": "最小移動速度",
+  "alaaggro.configuration.followRange": "追跡範囲 (ブロック)",
+
+  "alaaggro.configuration.radius": "通知半径 (ブロック)",
+  "alaaggro.configuration.longTermMemory": "長期記憶",
+
+  "alaaggro.configuration.scanIntervalTicks": "スキャン間隔 (ティック)",
+  "alaaggro.configuration.scanRadius": "スキャン半径 (ブロック)",
+
+  "alaaggro.configuration.entityBlacklist": "エンティティのブラックリスト",
+  "alaaggro.configuration.entityWhitelist": "エンティティのホワイトリスト"
+}

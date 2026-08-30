@@ -7,6 +7,7 @@
     "26.2-latest": "1.0.6"
   },
   "26.2": {
+    "1.1.0": "Fabric support alongside NeoForge. Tamed pets, babies and named mobs can be protected; modded bosses are recognised; slimes, ghasts and phantoms keep their own AI. The exempt list now survives restarts. Fixes: reload and toggle no longer ignore the config, and damage no longer compounds on reload.",
     "1.0.6": "Port to Minecraft 26.2 (Chaos Cubed). The new Sulfur Cube keeps its vanilla behaviour by default, like slimes and magma cubes. Land mobs swim across water toward you; config commands now persist to disk."
   },
   "26.1": {

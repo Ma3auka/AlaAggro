@@ -1,0 +1,6 @@
+accessWidener	v2	official
+
+# Same two fields as META-INF/accesstransformer.cfg, spelled the Fabric way. Keep both in step:
+# a field widened on one loader only produces a mod that compiles and then fails on the other.
+accessible	field	net/minecraft/world/entity/Mob	goalSelector	Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+accessible	field	net/minecraft/world/entity/Mob	targetSelector	Lnet/minecraft/world/entity/ai/goal/GoalSelector;

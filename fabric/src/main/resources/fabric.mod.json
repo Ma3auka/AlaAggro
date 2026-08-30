@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "${mod_id}",
+	"version": "${version}",
+	"name": "${mod_name}",
+	"description": "${description}",
+	"authors": ["${mod_authors}"],
+	"contact": {
+		"homepage": "${display_url}",
+		"issues": "${issue_tracker_url}"
+	},
+	"license": "${mod_license}",
+	"icon": "icon.png",
+	"accessWidener": "${mod_id}.accesswidener",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.ma3auka.alaaggro.fabric.AlaAggroFabric"]
+	},
+	"depends": {
+		"fabricloader": ">=${fabric_loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=${java_version}",
+		"fabric-api": "*"
+	}
+}

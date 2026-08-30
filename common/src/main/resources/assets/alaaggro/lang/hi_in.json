@@ -1,0 +1,53 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro: कॉन्फ़िग पुनः लोड हुआ, %s मॉब्स पर लागू किया गया।",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | सक्षम: %s | रिएक्टिव: %s",
+  "commands.alaaggro.status.numbers": "क्षति: x%s | गति: x%s | गति सीमा: %s",
+  "commands.alaaggro.status.helpmem": "मदद की पुकार: %s (त्रिज्या %s) | दीर्घकालिक स्मृति: %s",
+  "commands.alaaggro.status.protection": "शत्रुतापूर्ण ग्रामीण: %s | पालतू सुरक्षित: %s | शावक सुरक्षित: %s | नाम टैग वाले सुरक्षित: %s",
+  "commands.alaaggro.status.lists": "अवरुद्ध आयाम: %s | छूट प्राप्त खिलाड़ी: %s",
+  "commands.alaaggro.status.divider": "--- सक्रिय आक्रामक मॉब्स (लोडेड चंक्स) ---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — सक्षम: %s, रिएक्टिव: %s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro सक्षम = %s",
+  "commands.alaaggro.set.ok": "%s को %s पर सेट किया गया",
+
+  "commands.alaaggro.exempt.added": "%s को अब आक्रामकता से छूट है।",
+  "commands.alaaggro.exempt.removed": "%s को अब आक्रामकता से छूट नहीं है।",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro सर्वर सेटिंग्स",
+
+  "alaaggro.configuration.general": "सामान्य",
+  "alaaggro.configuration.aggression": "आक्रामकता",
+  "alaaggro.configuration.callForHelp": "मदद की पुकार",
+  "alaaggro.configuration.memory": "स्मृति",
+  "alaaggro.configuration.performance": "प्रदर्शन",
+  "alaaggro.configuration.lists": "मॉब सूचियाँ",
+
+  "alaaggro.configuration.enabled": "AlaAggro सक्षम करें",
+  "alaaggro.configuration.hostileVillagers": "शत्रुतापूर्ण ग्रामीण",
+  "alaaggro.configuration.reactiveOnly": "केवल प्रतिक्रियात्मक आक्रामकता",
+  "alaaggro.configuration.dimensionBlacklist": "आयामों की काली सूची",
+  "alaaggro.configuration.excludeTamed": "पालतू जानवरों को न छेड़ें",
+  "alaaggro.configuration.excludeBabies": "शावकों को न छेड़ें",
+  "alaaggro.configuration.excludeNamed": "नाम टैग वाले मॉब्स को न छेड़ें",
+  "alaaggro.configuration.persistExempt": "छूट सूची को दुनिया के साथ सहेजें",
+
+  "alaaggro.configuration.damageMultiplier": "क्षति गुणक",
+  "alaaggro.configuration.speedMultiplier": "गति गुणक",
+  "alaaggro.configuration.perCategorySpeedCap": "गति सीमा (प्रति श्रेणी)",
+  "alaaggro.configuration.defaultAttackDamage": "डिफ़ॉल्ट आक्रमण क्षति",
+  "alaaggro.configuration.minMovementSpeed": "न्यूनतम चाल गति",
+  "alaaggro.configuration.followRange": "पीछा करने की सीमा (ब्लॉक)",
+
+  "alaaggro.configuration.radius": "सूचना त्रिज्या (ब्लॉक)",
+  "alaaggro.configuration.longTermMemory": "दीर्घकालिक स्मृति",
+
+  "alaaggro.configuration.scanIntervalTicks": "स्कैन अंतराल (टिक)",
+  "alaaggro.configuration.scanRadius": "स्कैन त्रिज्या (ब्लॉक)",
+
+  "alaaggro.configuration.entityBlacklist": "इकाइयों की काली सूची",
+  "alaaggro.configuration.entityWhitelist": "इकाइयों की सफ़ेद सूची"
+}

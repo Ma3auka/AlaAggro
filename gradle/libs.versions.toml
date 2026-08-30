@@ -1,0 +1,13 @@
+# Build-time plugin and library versions.
+#
+# Anything the mod metadata needs (minecraft_version, fabric_version, neoforge_version, …) stays in
+# gradle.properties instead: processResources expands those into fabric.mod.json and
+# neoforge.mods.toml, and a version catalog is not readable from that expansion.
+
+[versions]
+fabric-loom = "1.17.12"
+neoforge-moddev = "2.0.141"
+
+[plugins]
+fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
+neoforge-moddev = { id = "net.neoforged.moddev", version.ref = "neoforge-moddev" }

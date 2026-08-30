@@ -1,0 +1,53 @@
+{
+  "commands.alaaggro.reload.success": "AlaAggro：配置已重新加载，已应用 %s 个生物。",
+
+  "commands.alaaggro.status.header": "AlaAggro v%s | 启用：%s | 反应模式：%s",
+  "commands.alaaggro.status.numbers": "伤害：x%s | 速度：x%s | 速度上限：%s",
+  "commands.alaaggro.status.helpmem": "求救：%s（半径 %s）| 长期记忆：%s",
+  "commands.alaaggro.status.protection": "村民敌对：%s | 已驯服受保护：%s | 幼年生物受保护：%s | 已命名受保护：%s",
+  "commands.alaaggro.status.lists": "维度黑名单：%s | 豁免玩家：%s",
+  "commands.alaaggro.status.divider": "--- 活跃的敌对生物（已加载区块）---",
+
+  "commands.alaaggro.info.line": "AlaAggro v%s — 启用：%s，反应模式：%s",
+
+  "commands.alaaggro.toggle.set": "AlaAggro 启用 = %s",
+  "commands.alaaggro.set.ok": "%s 已设置为 %s",
+
+  "commands.alaaggro.exempt.added": "%s 现已豁免敌对生物。",
+  "commands.alaaggro.exempt.removed": "%s 不再豁免敌对生物。",
+
+  "alaaggro.configuration.title": "AlaAggro",
+  "alaaggro.configuration.section.alaaggro.server.toml": "AlaAggro 服务器设置",
+
+  "alaaggro.configuration.general": "常规",
+  "alaaggro.configuration.aggression": "敌对性",
+  "alaaggro.configuration.callForHelp": "求救",
+  "alaaggro.configuration.memory": "记忆",
+  "alaaggro.configuration.performance": "性能",
+  "alaaggro.configuration.lists": "生物列表",
+
+  "alaaggro.configuration.enabled": "启用 AlaAggro",
+  "alaaggro.configuration.hostileVillagers": "村民敌对",
+  "alaaggro.configuration.reactiveOnly": "仅反击式敌对",
+  "alaaggro.configuration.dimensionBlacklist": "维度黑名单",
+  "alaaggro.configuration.excludeTamed": "不攻击已驯服的宠物",
+  "alaaggro.configuration.excludeBabies": "不攻击幼年生物",
+  "alaaggro.configuration.excludeNamed": "不攻击已命名的生物",
+  "alaaggro.configuration.persistExempt": "随世界保存豁免名单",
+
+  "alaaggro.configuration.damageMultiplier": "伤害倍率",
+  "alaaggro.configuration.speedMultiplier": "速度倍率",
+  "alaaggro.configuration.perCategorySpeedCap": "速度上限（按类别）",
+  "alaaggro.configuration.defaultAttackDamage": "默认攻击伤害",
+  "alaaggro.configuration.minMovementSpeed": "最低移动速度",
+  "alaaggro.configuration.followRange": "追踪范围（方块）",
+
+  "alaaggro.configuration.radius": "通知半径（方块）",
+  "alaaggro.configuration.longTermMemory": "长期记忆",
+
+  "alaaggro.configuration.scanIntervalTicks": "扫描间隔（游戏刻）",
+  "alaaggro.configuration.scanRadius": "扫描半径（方块）",
+
+  "alaaggro.configuration.entityBlacklist": "实体黑名单",
+  "alaaggro.configuration.entityWhitelist": "实体白名单"
+}
