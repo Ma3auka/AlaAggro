@@ -2,7 +2,8 @@
 
 This document tracks what is covered by automated tests in this mod and **why** each test exists. It is the answer to *"what bug class does this catch?"* — not a vanity counter of test cases.
 
-For studio-level testing strategy and rationale, see `_docs/14_TESTING_STRATEGY.md` in the workspace.
+Two tiers, and each test has to answer one question before it is written: *what class of bug does
+this catch?* A test that cannot answer it is not added.
 
 ---
 
@@ -13,7 +14,7 @@ For studio-level testing strategy and rationale, see `_docs/14_TESTING_STRATEGY.
 | 1 — Unit | JUnit 5 | `./gradlew :common:test` |
 | 2 — GameTest | shared scenarios, both loaders | `./gradlew :fabric:runGameTest` · `./gradlew :neoforge:runGameTests` |
 
-**Status: both tiers implemented.** 31 unit cases and 11 in-game scenarios, the latter running on Fabric *and* NeoForge from one set of bodies.
+**Status: both tiers implemented.** 31 unit cases and 10 in-game scenarios, the latter running on Fabric *and* NeoForge from one set of bodies.
 
 The Fabric game-test lane is part of `:fabric:build`. The NeoForge lane must be invoked explicitly — it is not wired into `build`.
 
@@ -35,7 +36,7 @@ The rules decide, for every mob that spawns, whether the mod rewrites its brain.
 | 1 | `plainMobIsEligible` | The baseline works at all. |
 | 2 | `disabledModTouchesNothing` | Master switch is honoured before anything else. |
 | 3 | `bossIsProtected` | A boss fight's scripted AI is never wiped. |
-| 4 | `mobWithoutWalkingAiIsLeftAlone` | The TASK-007/008 class: wiping a brain we cannot rebuild. |
+| 4 | `mobWithoutWalkingAiIsLeftAlone` | Wiping a brain we have nothing to rebuild with. |
 | 5 | `bossOutranksWalkingAi` | Rule precedence — a boss stays reported as a boss. |
 | 6 | `villagersFollowTheirOwnSwitch` | Both directions of the villager option. |
 | 7 | `blacklistedDimensionIsSkipped` | Dimension blacklist applies, and only there. |
@@ -85,12 +86,12 @@ One set of bodies, two lanes. Both loaders therefore prove the same behaviour, w
 | Scenario | What it proves |
 |---|---|
 | `passive_mob_gets_hostile_brain` | A cow really turns hostile, and the vanilla animal goals are gone — leaving them in is what kept the navigator busy so the mob never chased. |
-| `mob_without_walking_ai_is_untouched` | A ghast's goal count is byte-for-byte unchanged. Closes TASK-007/008. |
+| `mob_without_walking_ai_is_untouched` | A ghast's goal count is byte-for-byte unchanged — it used to be wiped once a second. |
 | `boss_is_untouched` | Boss AI is never rewritten. |
 | `tagged_mob_is_untouched` | The `alaaggro:excluded` tag works end to end, tag loading included. |
 | `tamed_pet_is_recognised` | Taming is read correctly from a live mob — vanilla answers it three different ways, and missing a branch means somebody's wolf attacks them. |
-| `land_mob_keeps_float_goal` | Land mobs can still cross water (TASK-006 fix). |
-| `water_mob_has_no_float_goal` | Fish do not surface and leap (TASK-002/003 fix). |
+| `land_mob_keeps_float_goal` | Land mobs can still swim across water instead of bouncing in place. |
+| `water_mob_has_no_float_goal` | Fish do not surface and leap out of the water. |
 | `repeated_injection_does_not_compound` | Six injections land on the same damage as one. Catches the compounding-multiplier bug directly. |
 | `pacify_restores_the_mob` | Switching off removes goals *and* the attribute changes, rather than baking them in. |
 | `stale_mob_is_rebuilt` | A config change reaches mobs already in the world. |
