@@ -50,26 +50,67 @@ jobs:
       SERVER_ENV_ID: '9639'
 
     steps:
-      - name: Resolve the release tag
+      - name: Resolve what we are releasing
         id: rel
         env:
           DISPATCH_TAG: ${{ github.event.inputs.tag }}
+          EVENT: ${{ github.event_name }}
         run: |
-          TAG="${DISPATCH_TAG:-$GITHUB_REF_NAME}"
-          # Anchored regex, not a glob: in a glob `*` matches anything, so a pattern like
-          # v[0-9]*.[0-9]*.[0-9]* happily accepts "v1.2.3; rm -rf /".
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::'$TAG' is not a release tag (expected vX.Y.Z)."
-            exit 1
+          if [ "$EVENT" = "push" ]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="$DISPATCH_TAG"
           fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$TAG" ]; then
+            # Anchored regex, not a glob: in a glob `*` matches anything, so a pattern like
+            # v[0-9]*.[0-9]*.[0-9]* happily accepts "v1.2.3; rm -rf /".
+            if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::'$TAG' is not a release tag (expected vX.Y.Z)."
+              exit 1
+            fi
+          fi
+
+          # A rehearsal has to be possible BEFORE the tag exists — that is the whole point of
+          # rehearsing. With no tag we check out the default branch and take the version from
+          # gradle.properties; uploading is refused later in that case.
+          if [ -n "$TAG" ] && git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "ref=$TAG"      >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG"      >> "$GITHUB_OUTPUT"
+            echo "has_tag=true"  >> "$GITHUB_OUTPUT"
+          else
+            [ -n "$TAG" ] && echo "::notice::tag $TAG does not exist yet — running against the default branch"
+            echo "ref=${{ github.event.repository.default_branch }}" >> "$GITHUB_OUTPUT"
+            echo "tag="          >> "$GITHUB_OUTPUT"
+            echo "has_tag=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.rel.outputs.tag }}
+          ref: ${{ steps.rel.outputs.ref }}
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Read the version
+        id: ver
+        env:
+          TAG: ${{ steps.rel.outputs.tag }}
+        run: |
+          DECLARED="$(grep -E '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
+          if [ -n "$TAG" ] && [ "$DECLARED" != "${TAG#v}" ]; then
+            echo "::error::tag says ${TAG#v} but gradle.properties says $DECLARED"
+            exit 1
+          fi
+          echo "version=$DECLARED" >> "$GITHUB_OUTPUT"
+          echo "releasing version $DECLARED"
+
+      - name: Refuse to upload without a tag
+        if: steps.rel.outputs.has_tag != 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          echo "::error::There is no tag to release. A real upload must come from a tag, so that"
+          echo "the release notes and the published commit are pinned. Re-run with dry_run: true,"
+          echo "or create the tag first."
+          exit 1
 
       - name: Check the publishing configuration
         run: |
@@ -81,21 +122,15 @@ jobs:
           fi
           echo "token present"
 
-      - name: Check the tag matches the declared version
-        env:
-          VERSION: ${{ steps.rel.outputs.version }}
-        run: |
-          DECLARED="$(grep -E '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
-          if [ "$DECLARED" != "$VERSION" ]; then
-            echo "::error::tag says $VERSION but gradle.properties says $DECLARED"
-            exit 1
-          fi
-          echo "version $VERSION confirmed"
-
       - name: Take the release notes from the tag
         env:
           TAG: ${{ steps.rel.outputs.tag }}
         run: |
+          if [ -z "$TAG" ]; then
+            echo "Rehearsal without a tag — using a placeholder instead of release notes." > NOTES.md
+            echo "placeholder notes (rehearsal)"
+            exit 0
+          fi
           # %(contents) is the whole message, verbatim. Do NOT rebuild it from subject and body:
           # git treats the subject as the first PARAGRAPH and folds its line breaks into one line,
           # so a wrapped opening paragraph would arrive on the store page as one long line.
@@ -134,7 +169,7 @@ jobs:
       - name: Resolve and validate the artifacts
         id: jars
         env:
-          VERSION: ${{ steps.rel.outputs.version }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           FABRIC_JAR=$(ls fabric/build/libs/*.jar | grep -vE -- '-(dev|sources|javadoc)\.jar$' | head -1)
           NEOFORGE_JAR=$(ls neoforge/build/libs/*.jar | grep -vE -- '-(dev|sources|javadoc)\.jar$' | head -1)
@@ -166,7 +201,7 @@ jobs:
       - name: Which files already exist on CurseForge
         id: existing
         env:
-          VERSION: ${{ steps.rel.outputs.version }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           # Re-running a failed release must not upload a second copy of a file that already went
           # through. The index goes to a FILE, never into an argument: it carries every file the
@@ -187,7 +222,7 @@ jobs:
         if: github.event.inputs.dry_run != 'true' && steps.existing.outputs.fabric_exists != '1'
         env:
           JAR: ${{ steps.jars.outputs.fabric_jar }}
-          DISPLAY_NAME: AlaAggro ${{ steps.rel.outputs.version }} (Fabric)
+          DISPLAY_NAME: AlaAggro ${{ steps.ver.outputs.version }} (Fabric)
         run: |
           # --rawfile reads the notes from disk, preserving line breaks. Passing them between steps
           # through an output collapses newlines, which is what mangles the store page.
@@ -213,7 +248,7 @@ jobs:
         if: github.event.inputs.dry_run != 'true' && steps.existing.outputs.neoforge_exists != '1'
         env:
           JAR: ${{ steps.jars.outputs.neoforge_jar }}
-          DISPLAY_NAME: AlaAggro ${{ steps.rel.outputs.version }} (NeoForge)
+          DISPLAY_NAME: AlaAggro ${{ steps.ver.outputs.version }} (NeoForge)
           NEOFORGE_ID: ${{ steps.loaders.outputs.neoforge_id }}
         run: |
           metadata=$(jq -n --rawfile changelog NOTES.md --arg name "$DISPLAY_NAME" \
@@ -235,7 +270,7 @@ jobs:
 
       - name: Summary
         env:
-          VERSION: ${{ steps.rel.outputs.version }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           {
             echo "### AlaAggro $VERSION"
