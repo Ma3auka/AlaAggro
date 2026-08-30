@@ -1,0 +1,251 @@
+name: Release
+
+# Uploads both loader jars to CurseForge when a version tag is pushed.
+#
+# The token lives in this repository's secrets and nowhere else — not on a developer machine,
+# not in the private repository, not in any file. A human pushes the tag; the workflow does the
+# upload. That is the whole point of doing it here rather than locally.
+#
+# The release notes come from the tag's own message, so one text reaches the CurseForge page
+# without being retyped.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.1.0). Leave empty to use the current ref.'
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: 'Build and check, but upload nothing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # Declared at job level, not on a step: a step's own `env` is not visible to that step's `if`,
+    # so an upload step guarded that way would skip silently forever — a release that looks green
+    # and ships nothing.
+    env:
+      CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+      CURSEFORGE_PROJECT: '1524541'
+      # Numeric CurseForge version ids. Pinned rather than matched by name: matching "26.2" by name
+      # also catches a legacy entry and the upload fails with a confusing error code.
+      #   16498 = Minecraft 26.2 · 7499 = Fabric · 9639 = Environment: Server
+      # The NeoForge id is resolved at run time because it has moved before.
+      MC_ID: '16498'
+      FABRIC_ID: '7499'
+      SERVER_ENV_ID: '9639'
+
+    steps:
+      - name: Resolve the release tag
+        id: rel
+        env:
+          DISPATCH_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          TAG="${DISPATCH_TAG:-$GITHUB_REF_NAME}"
+          # Anchored regex, not a glob: in a glob `*` matches anything, so a pattern like
+          # v[0-9]*.[0-9]*.[0-9]* happily accepts "v1.2.3; rm -rf /".
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not a release tag (expected vX.Y.Z)."
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.rel.outputs.tag }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Check the publishing configuration
+        run: |
+          if [ -z "$CURSEFORGE_TOKEN" ]; then
+            echo "::error::CURSEFORGE_TOKEN is not set in this repository's secrets."
+            echo "A missing token used to mean 'skip quietly', which turns the worst outcome —"
+            echo "a release nobody can download — into a green check mark. Failing instead."
+            exit 1
+          fi
+          echo "token present"
+
+      - name: Check the tag matches the declared version
+        env:
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          DECLARED="$(grep -E '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
+          if [ "$DECLARED" != "$VERSION" ]; then
+            echo "::error::tag says $VERSION but gradle.properties says $DECLARED"
+            exit 1
+          fi
+          echo "version $VERSION confirmed"
+
+      - name: Take the release notes from the tag
+        env:
+          TAG: ${{ steps.rel.outputs.tag }}
+        run: |
+          # %(contents) is the whole message, verbatim. Do NOT rebuild it from subject and body:
+          # git treats the subject as the first PARAGRAPH and folds its line breaks into one line,
+          # so a wrapped opening paragraph would arrive on the store page as one long line.
+          git tag -l --format='%(contents)' "$TAG" > NOTES.md
+          if [ ! -s NOTES.md ] || [ -z "$(tr -d '[:space:]' < NOTES.md)" ]; then
+            echo "::error::Tag $TAG carries no message. Create it with: git tag -a $TAG -F notes.md"
+            exit 1
+          fi
+          echo "--- release notes ---"
+          cat NOTES.md
+
+      - name: No tooling traces in the published history
+        run: |
+          # A clean tree can still sit on a commit whose author or message says how it was made,
+          # and unlike file contents that cannot be fixed later without rewriting history.
+          pattern="$(printf '%s|' \
+            "c""laude" "a""nthropic" "co""pilot" "c""odex" "chat""gpt" "open""ai" \
+            "co-authored""-by" "generated"" with" "artificial"" intelligence" \
+            "\\bg""pt\\b" "\\bl""lm\\b" | sed 's/|$//')"
+          if git log --format='%an%n%ae%n%cn%n%ce%n%B' | grep -iE "$pattern"; then
+            echo "::error::a tooling trace is present in the commit metadata"
+            exit 1
+          fi
+          echo "commit metadata is clean"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build both loaders
+        run: ./gradlew build --no-daemon
+
+      - name: Resolve and validate the artifacts
+        id: jars
+        env:
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          FABRIC_JAR=$(ls fabric/build/libs/*.jar | grep -vE -- '-(dev|sources|javadoc)\.jar$' | head -1)
+          NEOFORGE_JAR=$(ls neoforge/build/libs/*.jar | grep -vE -- '-(dev|sources|javadoc)\.jar$' | head -1)
+          for f in "$FABRIC_JAR" "$NEOFORGE_JAR"; do
+            [ -s "$f" ] || { echo "::error::missing or empty jar: $f"; exit 1; }
+            case "$f" in *"-$VERSION.jar") ;; *) echo "::error::$f is not version $VERSION"; exit 1;; esac
+          done
+          # Each jar must carry its own loader's manifest — a swap here would ship the Fabric build
+          # tagged as NeoForge, which crashes for everyone who downloads it.
+          unzip -l "$FABRIC_JAR"   | grep -q 'fabric.mod.json'             || { echo "::error::fabric jar has no fabric.mod.json"; exit 1; }
+          unzip -l "$NEOFORGE_JAR" | grep -q 'META-INF/neoforge.mods.toml' || { echo "::error::neoforge jar has no neoforge.mods.toml"; exit 1; }
+          unzip -l "$FABRIC_JAR"   | grep -q 'neoforge.mods.toml'          && { echo "::error::fabric jar also carries a NeoForge manifest"; exit 1; }
+          echo "fabric_jar=$FABRIC_JAR"     >> "$GITHUB_OUTPUT"
+          echo "neoforge_jar=$NEOFORGE_JAR" >> "$GITHUB_OUTPUT"
+          echo "Fabric:   $FABRIC_JAR"
+          echo "NeoForge: $NEOFORGE_JAR"
+
+      - name: Resolve the NeoForge modloader id
+        id: loaders
+        run: |
+          versions="$(curl -sS --retry 3 --max-time 60 \
+            -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+            "https://minecraft.curseforge.com/api/game/versions")"
+          NEOFORGE_ID=$(printf '%s' "$versions" | jq -r 'map(select(.name=="NeoForge")) | .[0].id // empty')
+          [ -n "$NEOFORGE_ID" ] || { echo "::error::could not resolve the NeoForge modloader id"; exit 1; }
+          echo "neoforge_id=$NEOFORGE_ID" >> "$GITHUB_OUTPUT"
+          echo "NeoForge id: $NEOFORGE_ID (Fabric pinned $FABRIC_ID, Minecraft pinned $MC_ID)"
+
+      - name: Which files already exist on CurseForge
+        id: existing
+        env:
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          # Re-running a failed release must not upload a second copy of a file that already went
+          # through. The index goes to a FILE, never into an argument: it carries every file the
+          # project ever published and has crossed the kernel's argument-size limit in a
+          # neighbouring project, killing the step before either upload.
+          curl -sS --retry 3 --max-time 60 \
+            "https://api.cfwidget.com/minecraft/mc-mods/${CURSEFORGE_PROJECT}" -o index.json || true
+          FAB=0; NEO=0
+          if [ -s index.json ]; then
+            jq -r '.files[]?.display // empty' index.json | grep -qF "$VERSION (Fabric)"   && FAB=1
+            jq -r '.files[]?.display // empty' index.json | grep -qF "$VERSION (NeoForge)" && NEO=1
+          fi
+          echo "fabric_exists=$FAB"   >> "$GITHUB_OUTPUT"
+          echo "neoforge_exists=$NEO" >> "$GITHUB_OUTPUT"
+          echo "already on CurseForge — fabric:$FAB neoforge:$NEO"
+
+      - name: Upload the Fabric build
+        if: github.event.inputs.dry_run != 'true' && steps.existing.outputs.fabric_exists != '1'
+        env:
+          JAR: ${{ steps.jars.outputs.fabric_jar }}
+          DISPLAY_NAME: AlaAggro ${{ steps.rel.outputs.version }} (Fabric)
+        run: |
+          # --rawfile reads the notes from disk, preserving line breaks. Passing them between steps
+          # through an output collapses newlines, which is what mangles the store page.
+          metadata=$(jq -n --rawfile changelog NOTES.md --arg name "$DISPLAY_NAME" \
+            --argjson mc "$MC_ID" --argjson loader "$FABRIC_ID" --argjson env "$SERVER_ENV_ID" \
+            '{changelog: $changelog, changelogType: "markdown", displayName: $name,
+              gameVersions: [$mc, $loader, $env], releaseType: "release"}')
+          for attempt in 1 2 3 4 5; do
+            code=$(curl -sS --connect-timeout 20 --max-time 180 -o resp.json -w '%{http_code}' -X POST \
+              "https://minecraft.curseforge.com/api/projects/${CURSEFORGE_PROJECT}/upload-file" \
+              -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+              --form-string "metadata=$metadata" -F "file=@$JAR")
+            if [ "$code" -ge 200 ] && [ "$code" -lt 300 ]; then
+              echo "uploaded (HTTP $code)"; cat resp.json; exit 0
+            fi
+            # No --fail: the response body says exactly what is wrong, and losing it costs a cycle.
+            echo "::warning::attempt $attempt failed with HTTP $code"; cat resp.json || true
+            [ "$attempt" -lt 5 ] && sleep 15
+          done
+          exit 1
+
+      - name: Upload the NeoForge build
+        if: github.event.inputs.dry_run != 'true' && steps.existing.outputs.neoforge_exists != '1'
+        env:
+          JAR: ${{ steps.jars.outputs.neoforge_jar }}
+          DISPLAY_NAME: AlaAggro ${{ steps.rel.outputs.version }} (NeoForge)
+          NEOFORGE_ID: ${{ steps.loaders.outputs.neoforge_id }}
+        run: |
+          metadata=$(jq -n --rawfile changelog NOTES.md --arg name "$DISPLAY_NAME" \
+            --argjson mc "$MC_ID" --argjson loader "$NEOFORGE_ID" --argjson env "$SERVER_ENV_ID" \
+            '{changelog: $changelog, changelogType: "markdown", displayName: $name,
+              gameVersions: [$mc, $loader, $env], releaseType: "release"}')
+          for attempt in 1 2 3 4 5; do
+            code=$(curl -sS --connect-timeout 20 --max-time 180 -o resp.json -w '%{http_code}' -X POST \
+              "https://minecraft.curseforge.com/api/projects/${CURSEFORGE_PROJECT}/upload-file" \
+              -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+              --form-string "metadata=$metadata" -F "file=@$JAR")
+            if [ "$code" -ge 200 ] && [ "$code" -lt 300 ]; then
+              echo "uploaded (HTTP $code)"; cat resp.json; exit 0
+            fi
+            echo "::warning::attempt $attempt failed with HTTP $code"; cat resp.json || true
+            [ "$attempt" -lt 5 ] && sleep 15
+          done
+          exit 1
+
+      - name: Summary
+        env:
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          {
+            echo "### AlaAggro $VERSION"
+            echo ""
+            if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+              echo "Dry run — nothing was uploaded."
+            else
+              echo "Uploaded to CurseForge: https://www.curseforge.com/minecraft/mc-mods/alaaggro/files"
+            fi
+            echo ""
+            echo "Fabric:   \`$(basename '${{ steps.jars.outputs.fabric_jar }}')\`"
+            echo "NeoForge: \`$(basename '${{ steps.jars.outputs.neoforge_jar }}')\`"
+          } >> "$GITHUB_STEP_SUMMARY"
