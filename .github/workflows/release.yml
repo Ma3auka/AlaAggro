@@ -1,3 +1,10 @@
+# Release workflow template.
+#
+# Installed into a mod's public mirror by _scripts/sync-mirror-ci.sh, which fills the double-
+# underscore placeholders below from <Mod>/docs/publishing/curseforge.env and gradle.properties.
+# Do NOT hardcode a project id or a mod name here: this file used to be a verbatim copy of one
+# mod's CI, and installing it into a second mod's mirror would have uploaded that mod's jars into
+# the first mod's CurseForge project.
 name: Release
 
 # Uploads both loader jars to CurseForge when a version tag is pushed.
@@ -23,6 +30,13 @@ on:
         description: 'Build and check, but upload nothing'
         type: boolean
         default: true
+      platforms:
+        description: >-
+          Which platforms to publish to. Use a single platform to finish a partial release
+          without re-uploading what already went through.
+        type: choice
+        options: [both, curseforge, modrinth]
+        default: both
 
 permissions:
   contents: read
@@ -48,6 +62,16 @@ jobs:
       MC_ID: '16498'
       FABRIC_ID: '7499'
       SERVER_ENV_ID: '9639'
+      # Modrinth. An empty project means the mod is not published there and every Modrinth step
+      # is skipped — declared at job level because a step's own `env` is invisible to its `if`.
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      MODRINTH_PROJECT: ''
+      MODRINTH_SLUG: ''
+      # Minecraft version as Modrinth names it, and the Fabric API project every Fabric build
+      # depends on. Dependencies on Modrinth are declared per VERSION, not per file — which is
+      # why each loader gets its own version rather than one version carrying two jars.
+      MODRINTH_GAME_VERSION: '26.2'
+      FABRIC_API_PROJECT: 'P7dR8mSH'
 
     steps:
       - name: Resolve what we are releasing
@@ -131,6 +155,13 @@ jobs:
             exit 1
           fi
           echo "token present"
+
+          if [ -n "$MODRINTH_PROJECT" ] && [ -z "$MODRINTH_TOKEN" ]; then
+            echo "::error::MODRINTH_PROJECT is set but MODRINTH_TOKEN is not in this repository's secrets."
+            echo "Failing rather than skipping: a half-published release is worse than none."
+            exit 1
+          fi
+          [ -n "$MODRINTH_PROJECT" ] && echo "Modrinth token present" || echo "Modrinth not configured for this mod - those steps will be skipped"
 
       - name: Take the release notes from the tag
         env:
@@ -226,6 +257,13 @@ jobs:
           # through. The index goes to a FILE, never into an argument: it carries every file the
           # project ever published and has crossed the kernel's argument-size limit in a
           # neighbouring project, killing the step before either upload.
+          #
+          # BEST EFFORT ONLY, and the difference matters: this reads a third-party index that lags
+          # from minutes to hours behind the platform. A re-run minutes after a successful upload
+          # is told the file is absent and uploads a duplicate -- observed on Ala Loot 1.4.0, where
+          # the check still reported 0/0 with both files already live. The Modrinth check below
+          # asks that platform's own API and does not have this problem. When re-running to finish
+          # a partial release, pass `platforms` instead of trusting this step.
           curl -sS --retry 3 --max-time 60 \
             "https://api.cfwidget.com/minecraft/mc-mods/${CURSEFORGE_PROJECT}" -o index.json || true
           FAB=0; NEO=0
@@ -238,10 +276,10 @@ jobs:
           echo "already on CurseForge — fabric:$FAB neoforge:$NEO"
 
       - name: Upload the Fabric build
-        if: github.event.inputs.dry_run != 'true' && steps.existing.outputs.fabric_exists != '1'
+        if: github.event.inputs.dry_run != 'true' && github.event.inputs.platforms != 'modrinth' && steps.existing.outputs.fabric_exists != '1'
         env:
           JAR: ${{ steps.jars.outputs.fabric_jar }}
-          DISPLAY_NAME: AlaAggro ${{ steps.ver.outputs.version }} (Fabric)
+          DISPLAY_NAME: Ala Aggro ${{ steps.ver.outputs.version }} (Fabric)
         run: |
           # --rawfile reads the notes from disk, preserving line breaks. Passing them between steps
           # through an output collapses newlines, which is what mangles the store page.
@@ -264,10 +302,10 @@ jobs:
           exit 1
 
       - name: Upload the NeoForge build
-        if: github.event.inputs.dry_run != 'true' && steps.existing.outputs.neoforge_exists != '1'
+        if: github.event.inputs.dry_run != 'true' && github.event.inputs.platforms != 'modrinth' && steps.existing.outputs.neoforge_exists != '1'
         env:
           JAR: ${{ steps.jars.outputs.neoforge_jar }}
-          DISPLAY_NAME: AlaAggro ${{ steps.ver.outputs.version }} (NeoForge)
+          DISPLAY_NAME: Ala Aggro ${{ steps.ver.outputs.version }} (NeoForge)
           NEOFORGE_ID: ${{ steps.loaders.outputs.neoforge_id }}
         run: |
           metadata=$(jq -n --rawfile changelog NOTES.md --arg name "$DISPLAY_NAME" \
@@ -287,17 +325,88 @@ jobs:
           done
           exit 1
 
+      # ---------------------------------------------------------------------------------------
+      # Modrinth. Skipped entirely when the mod has no project there.
+      #
+      # One VERSION per loader (`X.Y.Z+fabric`, `X.Y.Z+neoforge`) rather than one version with
+      # two files: Modrinth declares dependencies per version, and only the Fabric build needs
+      # Fabric API. A single version carrying both jars would force that dependency on NeoForge
+      # players too.
+      # ---------------------------------------------------------------------------------------
+      - name: Which versions already exist on Modrinth
+        id: modrinth
+        if: env.MODRINTH_PROJECT != ''
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          # Unlike the CurseForge check, this asks the platform's own API, so re-running a failed
+          # release cannot produce a duplicate: an existing version_number is seen immediately.
+          versions=$(curl -sSf --retry 5 --retry-delay 10 --retry-all-errors             --connect-timeout 20 --max-time 120             "https://api.modrinth.com/v2/project/${MODRINTH_PROJECT}/version"             -H "User-Agent: Ma3auka/mod-release/1.0")
+          fab=$(printf '%s' "$versions" | jq -r --arg v "$VERSION+fabric"   'any(.[]; .version_number == $v)')
+          neo=$(printf '%s' "$versions" | jq -r --arg v "$VERSION+neoforge" 'any(.[]; .version_number == $v)')
+          echo "fabric_exists=$fab"   >> "$GITHUB_OUTPUT"
+          echo "neoforge_exists=$neo" >> "$GITHUB_OUTPUT"
+          echo "already on Modrinth - fabric:$fab neoforge:$neo"
+
+      - name: Publish the Fabric build to Modrinth
+        if: env.MODRINTH_PROJECT != '' && github.event.inputs.dry_run != 'true' && github.event.inputs.platforms != 'curseforge' && steps.modrinth.outputs.fabric_exists != 'true'
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          JAR: ${{ steps.jars.outputs.fabric_jar }}
+          DISPLAY_NAME: Ala Aggro ${{ steps.ver.outputs.version }} (Fabric)
+        run: |
+          data=$(jq -n --rawfile changelog NOTES.md             --arg project "$MODRINTH_PROJECT" --arg version "$VERSION+fabric"             --arg name "$DISPLAY_NAME" --arg mc "$MODRINTH_GAME_VERSION"             --arg fabricapi "$FABRIC_API_PROJECT"             '{name: $name, version_number: $version, changelog: $changelog,
+              dependencies: [{project_id: $fabricapi, dependency_type: "required"}],
+              game_versions: [$mc], version_type: "release", loaders: ["fabric"],
+              featured: false, status: "listed", project_id: $project,
+              file_parts: ["file"], primary_file: "file"}')
+          for attempt in 1 2 3 4 5; do
+            code=$(curl -sS --connect-timeout 20 --max-time 180 -o resp.json -w '%{http_code}' -X POST               "https://api.modrinth.com/v2/version"               -H "Authorization: $MODRINTH_TOKEN"               -H "User-Agent: Ma3auka/mod-release/1.0"               --form-string "data=$data" -F "file=@$JAR")
+            if [ "$code" -ge 200 ] && [ "$code" -lt 300 ]; then
+              echo "uploaded to Modrinth (HTTP $code)"; cat resp.json; exit 0
+            fi
+            echo "::warning::attempt $attempt failed with HTTP $code"; cat resp.json || true
+            [ "$attempt" -lt 5 ] && sleep 15
+          done
+          exit 1
+
+      - name: Publish the NeoForge build to Modrinth
+        if: env.MODRINTH_PROJECT != '' && github.event.inputs.dry_run != 'true' && github.event.inputs.platforms != 'curseforge' && steps.modrinth.outputs.neoforge_exists != 'true'
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          JAR: ${{ steps.jars.outputs.neoforge_jar }}
+          DISPLAY_NAME: Ala Aggro ${{ steps.ver.outputs.version }} (NeoForge)
+        run: |
+          # No Fabric API dependency here - that is the whole reason for two versions.
+          data=$(jq -n --rawfile changelog NOTES.md             --arg project "$MODRINTH_PROJECT" --arg version "$VERSION+neoforge"             --arg name "$DISPLAY_NAME" --arg mc "$MODRINTH_GAME_VERSION"             '{name: $name, version_number: $version, changelog: $changelog,
+              dependencies: [], game_versions: [$mc], version_type: "release",
+              loaders: ["neoforge"], featured: false, status: "listed", project_id: $project,
+              file_parts: ["file"], primary_file: "file"}')
+          for attempt in 1 2 3 4 5; do
+            code=$(curl -sS --connect-timeout 20 --max-time 180 -o resp.json -w '%{http_code}' -X POST               "https://api.modrinth.com/v2/version"               -H "Authorization: $MODRINTH_TOKEN"               -H "User-Agent: Ma3auka/mod-release/1.0"               --form-string "data=$data" -F "file=@$JAR")
+            if [ "$code" -ge 200 ] && [ "$code" -lt 300 ]; then
+              echo "uploaded to Modrinth (HTTP $code)"; cat resp.json; exit 0
+            fi
+            echo "::warning::attempt $attempt failed with HTTP $code"; cat resp.json || true
+            [ "$attempt" -lt 5 ] && sleep 15
+          done
+          exit 1
+
       - name: Summary
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           {
-            echo "### AlaAggro $VERSION"
+            echo "### Ala Aggro $VERSION"
             echo ""
             if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
               echo "Dry run — nothing was uploaded."
             else
-              echo "Uploaded to CurseForge: https://www.curseforge.com/minecraft/mc-mods/alaaggro/files"
+              echo "CurseForge: https://www.curseforge.com/minecraft/mc-mods/alaaggro/files"
+              if [ -n "$MODRINTH_PROJECT" ]; then
+                echo ""
+                echo "Modrinth: https://modrinth.com/mod//versions"
+              fi
             fi
             echo ""
             echo "Fabric:   \`$(basename '${{ steps.jars.outputs.fabric_jar }}')\`"
