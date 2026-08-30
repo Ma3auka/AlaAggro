@@ -55,6 +55,7 @@ jobs:
         env:
           DISPATCH_TAG: ${{ github.event.inputs.tag }}
           EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$EVENT" = "push" ]; then
             TAG="$GITHUB_REF_NAME"
@@ -71,10 +72,19 @@ jobs:
             fi
           fi
 
-          # A rehearsal has to be possible BEFORE the tag exists — that is the whole point of
-          # rehearsing. With no tag we check out the default branch and take the version from
-          # gradle.properties; uploading is refused later in that case.
-          if [ -n "$TAG" ] && git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+          # A rehearsal has to be possible BEFORE the tag exists — that is the point of rehearsing.
+          # With no tag we check out the default branch and take the version from gradle.properties;
+          # uploading is refused later in that case.
+          #
+          # Whether the tag exists is asked of the API, not of git: this step runs BEFORE checkout,
+          # so there is no repository here and `git ls-remote` fails for every input. That failure
+          # read as "no such tag" and made a real, tag-triggered release refuse to publish.
+          if [ "$EVENT" = "push" ]; then
+            # We were started BY the tag, so it exists by definition.
+            echo "ref=$TAG"      >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG"      >> "$GITHUB_OUTPUT"
+            echo "has_tag=true"  >> "$GITHUB_OUTPUT"
+          elif [ -n "$TAG" ] && gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then
             echo "ref=$TAG"      >> "$GITHUB_OUTPUT"
             echo "tag=$TAG"      >> "$GITHUB_OUTPUT"
             echo "has_tag=true"  >> "$GITHUB_OUTPUT"
